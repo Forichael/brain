@@ -27,6 +27,7 @@ return;
 void data_RawCallback(const sensor_msgs::Imu::ConstPtr& msg)
 {
 	const ros::Time& t = msg->header.stamp;
+
 	double now = t.toSec();
 
 	double dt = now - then;
@@ -76,9 +77,10 @@ int main(int argc, char* argv[])
   ros::NodeHandle n;
   //subscribes to a node.
   then = ros::Time::now().toSec();
+  path_msg.header.frame_id = "path";
 
   ros::Subscriber imuSub = n.subscribe("/imu/mag", 1000, magCallback);
-  ros::Subscriber magSub = n.subscribe("/imu/data_raw", 1000, data_RawCallback);
+  ros::Subscriber magSub = n.subscribe("/imu/data", 1000, data_RawCallback);
   ros::Subscriber gpsFixSub = n.subscribe("fix", 1000, gpsFixCallback);
   ros::Subscriber gpsVelSub = n.subscribe("vel", 1000, gpsVelCallback);
   //wait for callbacks
