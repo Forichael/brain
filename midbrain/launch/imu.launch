@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="phidgets_imu" type="phidgets_imu_node" name="imu"/>
+
+	<!-- Coordinate Transformations -->
+	<node pkg="midbrain" type="transform.py" name="transform"/>
+
+	<!-- Filling Orientation Information -->
+	<node pkg="imu_complementary_filter" type="complementary_filter_node" name="filter"/>
+
+	<!--<node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization">
+		<rosparam command="load" file="$(find midbrain)/config/localization.yaml" />
+	</node>-->
+</launch>

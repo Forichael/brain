@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-	<node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization">
+	<!-- Start IMU -->
+	<include file="$(find midbrain)/launch/imu.launch"/>
+
+	<node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" output="screen">
 		<rosparam command="load" file="$(find midbrain)/config/localization.yaml" />
 	</node>
 </launch>

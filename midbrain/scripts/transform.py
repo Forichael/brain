@@ -17,13 +17,12 @@ if __name__ == '__main__':
     br = tf.TransformBroadcaster()
     rate = rospy.Rate(10.0)
     while not rospy.is_shutdown():
-        q1 = tf.transformations.quaternion_from_euler(0.0, d2r(90), 0.0)
-        q2 = tf.transformations.quaternion_from_euler(d2r(-90), 0.0, 0.0)
-        q = tf.transformations.quaternion_multiply(q2, q1)
-
-        br.sendTransform((0.0, 0.13, 0.0),
+        q = tf.transformations.quaternion_from_euler(0,0,0)
+	# consider robot (base_link) orientation/position to be coincident with imu
+	# need to be fixed later :/
+        br.sendTransform((0.0, 0.0, 0.0),
                          q,
                          rospy.Time.now(),
-                         "camera",
-                         "laser")
+                         "base_link",
+                         "imu")
         rate.sleep()
