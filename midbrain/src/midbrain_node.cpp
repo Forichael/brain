@@ -1,12 +1,15 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
+#include "geometry_msgs/Vector3.h"
+
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/Vector3Stamped.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "sensor_msgs/NavSatFix.h"
 #include "nav_msgs/Path.h"
 #include "geometry_msgs/PoseStamped.h"
-
+#include "tf/LinearMath/Quaternion.h"
+#include "tf/transform_datatypes.h"
 
 double y;
 double x;
@@ -16,12 +19,12 @@ double pos_x, pos_y;
 double vel_x, vel_y;
 
 nav_msgs::Path path_msg;
+geometry_msgs::Vector3 accel_msg;
 
 void magCallback(const geometry_msgs::Vector3Stamped::ConstPtr& msg)
 {
 	ROS_INFO("Imu Magnetic Orientation x: [%f], y: [%f], z: [%f]", msg->vector.x,msg->vector.y,msg->vector.z);
-
-return;
+	return;
 }
 
 void data_RawCallback(const sensor_msgs::Imu::ConstPtr& msg)
@@ -31,9 +34,21 @@ void data_RawCallback(const sensor_msgs::Imu::ConstPtr& msg)
 	double now = t.toSec();
 
 	double dt = now - then;
+
+	// convert to global ...
+	tf::Quaternion quat;
+	tf::Vector3 vec;
+
+	tf::quaternionMsgToTF(msg->orientation, quat);
+	tf::vector3MsgToTF(msg->linear_acceleration, vec);
+	tf::vector3TFToMsg(tf::quatRotate(quat, vec),accel_msg);
 	
-	vel_x += msg->linear_acceleration.x * dt;
-	vel_y += msg->linear_acceleration.y * dt;
+	// now integrate
+	vel_x += accel_msg.x * dt;
+	vel_y += accel_msg.y * dt;
+
+	vel_x *= 0.99; // anneal
+	vel_y *= 0.99;
 
 	pos_x += vel_x * dt;
 	pos_y += vel_y * dt;
@@ -45,11 +60,8 @@ void data_RawCallback(const sensor_msgs::Imu::ConstPtr& msg)
 	pose.pose.position.z = 0.0;
 
 	path_msg.poses.push_back(pose);
-
+	
 	then = now;
-	ROS_INFO("Imu Seq: [%d]", msg->header.seq);
-	ROS_INFO("Imu Angular_velocity x: [%f], y: [%f], z: [%f]", msg->angular_velocity.x,msg->angular_velocity.y,msg->angular_velocity.z);
-	ROS_INFO("Imu Linear_Acceleration x: [%f], y: [%f], z: [%f]", msg->linear_acceleration.x,msg->linear_acceleration.y,msg->linear_acceleration.z);
 	return;
 }
 
@@ -86,9 +98,11 @@ int main(int argc, char* argv[])
   //wait for callbacks
 
   ros::Publisher pathPub = n.advertise<nav_msgs::Path>("path", 1000, true);
+  ros::Publisher orPub = n.advertise<geometry_msgs::Vector3>("lin_accel", 1000, true);
 
   while(ros::ok()){
   	pathPub.publish(path_msg);
+	orPub.publish(accel_msg);
   	ros::spinOnce();
   }
 
