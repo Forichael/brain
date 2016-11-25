@@ -10,6 +10,7 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "tf/LinearMath/Quaternion.h"
 #include "tf/transform_datatypes.h"
+#include <list>
 
 double then;
 
@@ -18,6 +19,8 @@ double vel_x, vel_y; // implicitly assumed zero
 
 nav_msgs::Odometry odom_msg;
 geometry_msgs::Vector3 accel_msg;
+
+std::list<geometry_msgs::Vector3> accel_history;
 
 void magCallback(const geometry_msgs::Vector3Stamped::ConstPtr& msg)
 {
@@ -40,13 +43,35 @@ void data_RawCallback(const sensor_msgs::Imu::ConstPtr& msg)
 	tf::quaternionMsgToTF(msg->orientation, quat);
 	tf::vector3MsgToTF(msg->linear_acceleration, vec);
 	tf::vector3TFToMsg(tf::quatRotate(quat, vec),accel_msg);
-	
+
+	// smoothing ...
+	if(accel_history.size() > 100){
+		accel_history.pop_front();
+	}
+
+	accel_history.push_back(accel_msg);
+
+	accel_msg.x = 0;
+	accel_msg.y = 0;
+	//unfortunately can't use range based for loop
+	for(std::list<geometry_msgs::Vector3>::iterator it=accel_history.begin(); it != accel_history.end(); ++it){
+		accel_msg.x += it->x;
+		accel_msg.y += it->y;
+	}
+
+	int n = accel_history.size();
+
+	accel_msg.x /= n;
+	accel_msg.y /= n;
+
+	// smoothing done
+
 	// now integrate
 	vel_x += accel_msg.x * dt;
 	vel_y += accel_msg.y * dt;
 
-	vel_x *= 0.999; // anneal
-	vel_y *= 0.999;
+	//vel_x *= 0.999; // anneal
+	//vel_y *= 0.999;
 
 	pos_x += vel_x * dt;
 	pos_y += vel_y * dt;
