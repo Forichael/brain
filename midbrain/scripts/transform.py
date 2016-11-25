@@ -23,6 +23,6 @@ if __name__ == '__main__':
         br.sendTransform((0.0, 0.0, 0.0),
                          q,
                          rospy.Time.now(),
-                         "base_link",
-                         "imu")
+                         "imu",
+                         "base_link")
         rate.sleep()

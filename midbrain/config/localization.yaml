@@ -1,26 +1,29 @@
 odom_frame: odom
 base_link_frame: base_link
-world_frame: map
+world_frame: odom
+publish_tf: true
 
 two_d_mode: true
 
 frequency: 50
 
-#odom0: /funrobo/velocity_controller/odom
-#odom0_config: [false, false, false,
-#               false, false, false,
-#               true, true, true,
-#               false, false, true,
-#               false, false, false]
-#odom0_differential: false
-#odom0_queue_size: 10
+# From Visual Odometry
+odom0: /odom/visual_odometry
+odom0_config: [true, true, true, # pos x y z
+               true, true, true, # local orientation x y z # Pose
+               true, true, true, # lin_vel x y z
+               true, true, true, #ang_vel x y z # Twist
+               false, false, false] # lin_acc x y z # No Accel
+odom0_differential: false 
+odom0_queue_size: 10
 
+# From IMU
 imu0: /imu/data
-imu0_config: [true, true, true,
-              true, true, true,
-              true, true, true,
+imu0_config: [false, false, false, # no position data
+              false, false, false, # orientation w.r.t global frame... but not here, I guess?
+              false, false, false, # no velocity data
               true, true, true,
               true, true, true]
-imu0_differential: true
+imu0_differential: false # Absolute Orientation (w.r.t magnetic field)
 imu0_queue_size: 10
-imu0_remove_gravitational_acceleration: true
+imu0_remove_gravitational_acceleration: true 

@@ -1,0 +1,11 @@
+<launch>
+	<group ns="cam">
+		<node name="camera" pkg="uvc_camera" type="uvc_camera_node" args="_device:=/dev/video0"/>
+		<node name="proc" pkg="image_proc" type="image_proc" args="image:=image_raw" />
+	</group>
+	<node pkg="tf" type="static_transform_publisher" name="base_link_to_camera" args="0 0 0 1.5708 0 1.5708 base_link camera 100" />
+	<node name="visual_odometry" pkg="viso2_ros" type="mono_odometer" args="_camera_height:=1.04 _camera_pitch:=-0.05 image:=/cam/image_rect_color">
+		<remap from="/odom/odometry" to="/odom/visual_odometry"/>
+	</node>
+	<!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find visual_odometry)/rviz/visual_odometry.rviz"/>-->
+</launch>

@@ -3,6 +3,16 @@
 	<!-- Start IMU -->
 	<include file="$(find midbrain)/launch/imu.launch"/>
 
+	<!-- Visual Odometry from Camera -->
+	<include file="$(find midbrain)/launch/visual_odometry.launch"/>
+
+	<!-- Transforms -->
+	<node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu 100" />
+
+	<!-- Placeholder for now, until we have a global frame ... we "start" at 0 -->
+	<node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" />
+
+	<!-- Localization -->
 	<node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" output="screen">
 		<rosparam command="load" file="$(find midbrain)/config/localization.yaml" />
 	</node>
