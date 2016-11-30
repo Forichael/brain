@@ -35,6 +35,8 @@
 
 	</node>
 
+	<node pkg="midbrain" type="compass_node" name="compass"/>
+
 <!--
 	 Unstable!
 	<node pkg="midbrain" type="vec3tomag.py" name="vec3tomag"/>

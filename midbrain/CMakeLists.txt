@@ -128,6 +128,7 @@ include_directories(
 
 ## Declare a C++ executable
  add_executable(midbrain_node src/midbrain_node.cpp)
+ add_executable(compass_node src/compass.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -135,6 +136,10 @@ include_directories(
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(midbrain_node
+   ${catkin_LIBRARIES}
+ )
+
+ target_link_libraries(compass_node
    ${catkin_LIBRARIES}
  )
 
