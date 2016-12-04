@@ -64,7 +64,6 @@ def cmdcallback(data):
 	if(isInitialized==False):
 		isInitialized= True
 	c_Vel = data
-	print c_Vel
 
 def listener():
 
@@ -75,7 +74,7 @@ def listener():
     # run simultaneously.
     global f
     f.write('session, image#, linear.x, angular.z, \n')
-    g.write('session, image#, linear.x, linear.y, linear.z, angular.x, angular.y, angular.z')
+    g.write('session, image#, linear.x, linear.y, linear.z, angular.x, angular.y, angular.z\n')
     rospy.init_node('listener', anonymous=True)
     rospy.Subscriber("start", Bool, startcallback)
     rospy.Subscriber("end", Bool, endcallback)
