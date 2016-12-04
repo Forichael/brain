@@ -7,6 +7,7 @@ class Detector{
 	SimpleBlobDetector detector;
 
 };
+
 void proc(){
 
 }
