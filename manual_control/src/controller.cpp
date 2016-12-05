@@ -128,7 +128,7 @@ class Controller{
 			last_published = ros::Time::now().toSec();
 
 			double turn = msg->axes[0];
-			double thrust = msg->axes[1];
+			double thrust = msg->axes[4];
 
 			vel_msg.linear.x = thrust;
 			vel_msg.angular.z = turn;
