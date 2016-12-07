@@ -4,13 +4,16 @@ project(alpha_image_proc)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
-  roscpp
-  rospy
-  sensor_msgs
-  std_msgs
-)
+	cv_bridge
+	image_transport
+	geometry_msgs
+	roscpp
+	rospy
+	sensor_msgs
+	std_msgs
+	)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -102,11 +105,11 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES alpha_image_proc
-#  CATKIN_DEPENDS geometry_msgs roscpp rospy sensor_msgs std_msgs
-#  DEPENDS system_lib
-)
+	#  INCLUDE_DIRS include
+	#  LIBRARIES alpha_image_proc
+	#  CATKIN_DEPENDS geometry_msgs roscpp rospy sensor_msgs std_msgs
+	#  DEPENDS system_lib
+	)
 
 ###########
 ## Build ##
@@ -116,8 +119,8 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+	${catkin_INCLUDE_DIRS}
+	)
 
 ## Declare a C++ library
 # add_library(alpha_image_proc
@@ -130,16 +133,16 @@ include_directories(
 # add_dependencies(alpha_image_proc ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(alpha_image_proc_node src/alpha_image_proc_node.cpp)
+add_executable(image_proc_node src/main.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(alpha_image_proc_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(alpha_image_proc_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(image_proc_node
+	${catkin_LIBRARIES}
+	)
 
 #############
 ## Install ##
