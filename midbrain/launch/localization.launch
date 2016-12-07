@@ -4,8 +4,6 @@
 	<include file="$(find midbrain)/launch/imu.launch"/>
 
 	<!-- Visual Odometry from Camera -->
-	<include file="$(find midbrain)/launch/visual_odometry.launch"/>
-
 	<!-- Transforms -->
 	<!-- Currently. I'm not too sure if the IMU is aligned with the robot's coordinate system (x forwards, y left, z up) -->
 	<node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu 100" />

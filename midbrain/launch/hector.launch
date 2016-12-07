@@ -11,6 +11,6 @@
 		<param name="map_start_x" value="0.5"/>
 		<param name="map_start_y" value="0.2"/>
 	</node>
-	<node pkg="rosbag" type="play" name="rosbag" args="<BAGFILE HERE> --clock" output="screen"/>
+	<node pkg="rosbag" type="play" name="rosbag" args="/home/thuc/Downloads/2016-12-05-20-17-29.bag --clock" output="screen"/>
 	<node pkg="tf" type="static_transform_publisher" name="base_to_laser_broadcaster" args="0 0 0 0 0 0 /base_link /laser 10" />
 </launch>
