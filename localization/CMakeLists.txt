@@ -128,6 +128,8 @@ include_directories(
 
 ## Declare a C++ executable
  add_executable(midbrain_node src/midbrain_node.cpp)
+ add_executable(compass_node src/compass.cpp)
+ add_executable(wheel_odometry_node src/wheel_odometry.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -138,6 +140,13 @@ include_directories(
    ${catkin_LIBRARIES}
  )
 
+ target_link_libraries(compass_node
+   ${catkin_LIBRARIES}
+ )
+
+ target_link_libraries(wheel_odometry_node
+   ${catkin_LIBRARIES}
+ )
 #############
 ## Install ##
 #############

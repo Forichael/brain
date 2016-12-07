@@ -6,24 +6,25 @@
 #include "geometry_msgs/Vector3Stamped.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "sensor_msgs/NavSatFix.h"
-#include "nav_msgs/Path.h"
+#include "nav_msgs/Odometry.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "tf/LinearMath/Quaternion.h"
 #include "tf/transform_datatypes.h"
+#include <list>
 
-double y;
-double x;
 double then;
 
 double pos_x, pos_y;
-double vel_x, vel_y;
+double vel_x, vel_y; // implicitly assumed zero
 
-nav_msgs::Path path_msg;
+nav_msgs::Odometry odom_msg;
 geometry_msgs::Vector3 accel_msg;
+
+std::list<geometry_msgs::Vector3> accel_history;
 
 void magCallback(const geometry_msgs::Vector3Stamped::ConstPtr& msg)
 {
-	ROS_INFO("Imu Magnetic Orientation x: [%f], y: [%f], z: [%f]", msg->vector.x,msg->vector.y,msg->vector.z);
+	//ROS_INFO("Imu Magnetic Orientation x: [%f], y: [%f], z: [%f]", msg->vector.x,msg->vector.y,msg->vector.z);
 	return;
 }
 
@@ -42,25 +43,59 @@ void data_RawCallback(const sensor_msgs::Imu::ConstPtr& msg)
 	tf::quaternionMsgToTF(msg->orientation, quat);
 	tf::vector3MsgToTF(msg->linear_acceleration, vec);
 	tf::vector3TFToMsg(tf::quatRotate(quat, vec),accel_msg);
-	
+
+	// smoothing ...
+	if(accel_history.size() > 100){
+		accel_history.pop_front();
+	}
+
+	accel_history.push_back(accel_msg);
+
+	accel_msg.x = 0;
+	accel_msg.y = 0;
+	//unfortunately can't use range based for loop
+	for(std::list<geometry_msgs::Vector3>::iterator it=accel_history.begin(); it != accel_history.end(); ++it){
+		accel_msg.x += it->x;
+		accel_msg.y += it->y;
+	}
+
+	int n = accel_history.size();
+
+	accel_msg.x /= n;
+	accel_msg.y /= n;
+
+	// smoothing done
+
 	// now integrate
 	vel_x += accel_msg.x * dt;
 	vel_y += accel_msg.y * dt;
 
-	vel_x *= 0.99; // anneal
-	vel_y *= 0.99;
+	//vel_x *= 0.999; // anneal
+	//vel_y *= 0.999;
 
 	pos_x += vel_x * dt;
 	pos_y += vel_y * dt;
 
-	geometry_msgs::PoseStamped pose;
-	
-	pose.pose.position.x = pos_x;
-	pose.pose.position.y = pos_y;
-	pose.pose.position.z = 0.0;
+	// fill in header
+	odom_msg.header.stamp = ros::Time::now();
+	odom_msg.header.frame_id = "odom";
+	odom_msg.child_frame_id = "base_link";
 
-	path_msg.poses.push_back(pose);
-	
+	// fill in pose
+	odom_msg.pose.pose.position.x = pos_x;
+	odom_msg.pose.pose.position.y = pos_y;
+	odom_msg.pose.pose.position.z = 0.0; // ignore z component
+	odom_msg.pose.pose.orientation = msg->orientation;
+
+	// fill in twist
+	odom_msg.twist.twist.linear.x = vel_x;
+	odom_msg.twist.twist.linear.y = vel_y;
+	odom_msg.twist.twist.linear.z = 0.0; // ignore z component
+	odom_msg.twist.twist.angular = msg->angular_velocity; // directly use angular velocity
+
+	// empty covariance, needs to be dealt with.
+	// for pose/twist
+
 	then = now;
 	return;
 }
@@ -81,15 +116,13 @@ void gpsVelCallback(const geometry_msgs::TwistStamped::ConstPtr& msg)
 
 int main(int argc, char* argv[])
 {
-	x = 0;
-	y = 0;
   //initialize the node. 
   ros::init(argc, argv, "midbrain");
   //node handle.
   ros::NodeHandle n;
   //subscribes to a node.
   then = ros::Time::now().toSec();
-  path_msg.header.frame_id = "path";
+  odom_msg.header.frame_id = "odom";
 
   ros::Subscriber imuSub = n.subscribe("/imu/mag", 1000, magCallback);
   ros::Subscriber magSub = n.subscribe("/imu/data", 1000, data_RawCallback);
@@ -97,11 +130,11 @@ int main(int argc, char* argv[])
   ros::Subscriber gpsVelSub = n.subscribe("vel", 1000, gpsVelCallback);
   //wait for callbacks
 
-  ros::Publisher pathPub = n.advertise<nav_msgs::Path>("path", 1000, true);
+  ros::Publisher odomPub = n.advertise<nav_msgs::Odometry>("odom", 1000, true);
   ros::Publisher orPub = n.advertise<geometry_msgs::Vector3>("lin_accel", 1000, true);
 
   while(ros::ok()){
-  	pathPub.publish(path_msg);
+  	odomPub.publish(odom_msg);
 	orPub.publish(accel_msg);
   	ros::spinOnce();
   }
