@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
 	<!-- Start IMU -->
-	<include file="$(find midbrain)/launch/imu.launch"/>
+	<include file="$(find localization)/launch/imu.launch"/>
+	<include file="$(find localization)/launch/lidar.launch"/>
 
 	<!-- Visual Odometry from Camera -->
 	<!-- Transforms -->
@@ -13,6 +14,6 @@
 
 	<!-- Localization -->
 	<node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" output="screen">
-		<rosparam command="load" file="$(find midbrain)/config/localization.yaml" />
+		<rosparam command="load" file="$(find localization)/config/localization.yaml" />
 	</node>
 </launch>
