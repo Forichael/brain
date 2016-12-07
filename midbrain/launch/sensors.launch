@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<include file="$(find midbrain)/launch/imu.launch"/>
+	<node name="camera" pkg="uvc_camera" type="uvc_camera_node" args="_device:=/dev/video0"/>
+	<node name="lidar" pkg="urg_node" type="urg_node" args="_serial_port:=/dev/ttyACM1"/>
+	<node name="gps" pkg="nmea_navsat_driver" type="nmea_serial_driver" args="_port:=/dev/ttyACM2 _baud:=115200"/>
+</launch>

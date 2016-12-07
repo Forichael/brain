@@ -24,7 +24,7 @@
 
 	<!-- Filling Orientation Information -->
 	
-	<node pkg="nodelet" type="nodelet" name="ImuFilterNodelet" 
+	<!--<node pkg="nodelet" type="nodelet" name="ImuFilterNodelet" 
 		args="load imu_filter_madgwick/ImuFilterNodelet imu_manager" 
 		output="screen">
 
@@ -33,20 +33,15 @@
 		<param name="use_magnetic_field_msg" value="false"/>
 		<param name="publish_tf" value="true"/>
 
-	</node>
+	</node>-->
 
 	<node pkg="midbrain" type="compass_node" name="compass"/>
-
-<!--
-	 Unstable!
-	<node pkg="midbrain" type="vec3tomag.py" name="vec3tomag"/>
 
 	<node pkg="imu_complementary_filter" type="complementary_filter_node" name="imu_complementary_filter">
 		<remap from="/imu/mag" to="/imu/magnetic_field"/>
 		<param name="use_mag" value="true"/>
 		<param name="publish_tf" value="true"/>
 	</node>
--->
 
 	<!-- Coordinate Transformations -->
 	<!--<node pkg="midbrain" type="transform.py" name="transform"/>-->
