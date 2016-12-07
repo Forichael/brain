@@ -5,12 +5,17 @@
 	<include file="$(find localization)/launch/lidar.launch"/>
 
 	<!-- Visual Odometry from Camera -->
+
+	<!-- Wheel Odometry-->
+<!-- 	<node pkg= "localization" type="wheel_odometry_node" name="wheel_odometry"/> -->
+
 	<!-- Transforms -->
 	<!-- Currently. I'm not too sure if the IMU is aligned with the robot's coordinate system (x forwards, y left, z up) -->
 	<node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu 100" />
 
 	<!-- Placeholder for now, until we have a global frame ... we "start" at 0 -->
-	<node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" />
+	<node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" /> 
+
 
 	<!-- Localization -->
 	<node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" output="screen">
