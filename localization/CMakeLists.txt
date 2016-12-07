@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(midbrain)
+project(localization)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -100,7 +100,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES midbrain
+#  LIBRARIES localization
 #  CATKIN_DEPENDS roscpp std_msgs
 #  DEPENDS system_lib
 )
@@ -117,18 +117,19 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(midbrain
-#   src/${PROJECT_NAME}/midbrain.cpp
+# add_library(localization
+#   src/${PROJECT_NAME}/localization.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(midbrain ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(localization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
  add_executable(midbrain_node src/midbrain_node.cpp)
  add_executable(compass_node src/compass.cpp)
+ add_executable(wheel_odometry_node src/wheel_odometry.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -143,6 +144,9 @@ include_directories(
    ${catkin_LIBRARIES}
  )
 
+ target_link_libraries(wheel_odometry_node
+   ${catkin_LIBRARIES}
+ )
 #############
 ## Install ##
 #############
@@ -158,7 +162,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS midbrain midbrain_node
+# install(TARGETS localization localization_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -183,7 +187,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_midbrain.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_localization.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

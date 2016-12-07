@@ -35,7 +35,7 @@
 
 	</node>
 
-	<node pkg="midbrain" type="compass_node" name="compass"/>
+	<node pkg="localization" type="compass_node" name="compass"/>
 
 <!--
 	 Unstable!
