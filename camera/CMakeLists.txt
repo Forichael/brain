@@ -1,11 +1,15 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(midbrain)
+project(camera_node)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  cv_bridge
+  image_transport
   roscpp
+  rospy
+  sensor_msgs
   std_msgs
 )
 
@@ -66,7 +70,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   sensor_msgs#   std_msgs
 # )
 
 ################################################
@@ -100,8 +104,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES midbrain
-#  CATKIN_DEPENDS roscpp std_msgs
+#  LIBRARIES camera_node
+#  CATKIN_DEPENDS cv_bridge image_transport opencv2 roscpp rospy sensor_msgs std_msgs
 #  DEPENDS system_lib
 )
 
@@ -117,31 +121,26 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(midbrain
-#   src/${PROJECT_NAME}/midbrain.cpp
+# add_library(camera_node
+#   src/${PROJECT_NAME}/camera_node.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(midbrain ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(camera_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
- add_executable(midbrain_node src/midbrain_node.cpp)
- add_executable(compass_node src/compass.cpp)
+# add_executable(camera_node_node src/camera_node_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
- add_dependencies(midbrain_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(camera_node_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(midbrain_node
-   ${catkin_LIBRARIES}
- )
-
- target_link_libraries(compass_node
-   ${catkin_LIBRARIES}
- )
+# target_link_libraries(camera_node_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -158,7 +157,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS midbrain midbrain_node
+# install(TARGETS camera_node camera_node_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -183,7 +182,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_midbrain.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_camera_node.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

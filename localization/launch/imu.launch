@@ -35,7 +35,7 @@
 
 	</node>-->
 
-	<node pkg="midbrain" type="compass_node" name="compass"/>
+	<node pkg="localization" type="compass_node" name="compass"/>
 
 	<node pkg="imu_complementary_filter" type="complementary_filter_node" name="imu_complementary_filter">
 		<remap from="/imu/mag" to="/imu/magnetic_field"/>

@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="joy" default="True"/>
+
+	<node name="joy" if="$(arg joy)" pkg="joy" type="joy_node" args="_autorepeat_rate:=5.0"/> <!-- autorepeat in Hz -->
+	<node name="control" pkg="manual_control" type="manual_control_node" output="screen" args="_joy:=$(arg joy)"/>
+</launch>
+
