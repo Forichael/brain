@@ -3,10 +3,10 @@
 	<!-- Nodelet manager --> 
 	<node pkg="nodelet" type="nodelet" name="imu_manager" args="manager" output="screen"/>
 
-	<node pkg="nodelet" type="nodelet" name="PhidgetsImuNodelet" args="load phidgets_imu/PhidgetsImuNodelet imu_manager" output="screen">
 		<!-- Data Rates in ms -->
-		<param name="period" value="32"/>
 		<!-- Compass Correction Params -->
+	<node pkg="nodelet" type="nodelet" name="PhidgetsImuNodelet" args="load phidgets_imu/PhidgetsImuNodelet imu_manager" output="screen">
+		<param name="period" value="32"/>
 		<param name="cc_mag_field" value="1.02746"/>
 		<param name="cc_offset0" value="-0.75218"/>
 		<param name="cc_offset1" value="0.54769"/>
@@ -21,6 +21,7 @@
 		<param name="cc_t4" value="0.17391"/>
 		<param name="cc_t5" value="-0.33682"/>
 	</node>
+	
 
 	<!-- Filling Orientation Information -->
 	
@@ -36,6 +37,7 @@
 	</node>-->
 
 	<node pkg="localization" type="compass_node" name="compass"/>
+	<node pkg="localization" type="vec3tomag.py" name="vec3tomag"/>
 
 	<node pkg="imu_complementary_filter" type="complementary_filter_node" name="imu_complementary_filter">
 		<remap from="/imu/mag" to="/imu/magnetic_field"/>
@@ -44,6 +46,6 @@
 	</node>
 
 	<!-- Coordinate Transformations -->
-	<!--<node pkg="midbrain" type="transform.py" name="transform"/>-->
+	<!--<node pkg="localization" type="transform.py" name="transform"/>-->
 
 </launch>
