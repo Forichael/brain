@@ -13,7 +13,7 @@ from std_msgs.msg import Bool
 from math import exp
 from std_msgs.msg import Float32MultiArray
 
-desired_angle = [0,0,0,0,0,0,0,0,0,0,0]
+desired_angle = [0 for _ in range(11)]
 
 def imageCallback(data):
     global desired_angle
@@ -69,13 +69,13 @@ def imageCallback(data):
             desired_angle =[]
             total_confidence = 0            
 
-            for a in range(0,10):
+            for a in range(0,11):
                 desired_angle.append( exp(-(a-desired_x)**2/2.0)*(350-upper_offset-cm[1])**2/((350.0-upper_offset)**2))
                 
             #print (desired_angle)
         else:
             desired_angle=[]
-            for a in range(0,10):
+            for a in range(0,11):
                 desired_angle.append(0)
         resized_img = img[0:200, 0:320]
         print(sum(desired_angle))
@@ -90,10 +90,10 @@ def imageCallback(data):
         #         cv2.line(img,(x1,y1),(x2,y2),(0,255,0),2)
  
 
-        cv2.imshow('mask', mask)
-        cv2.imshow('edges',edges)
-        cv2.imshow('original',img)
-        cv2.imshow('blur', blur)
+        #cv2.imshow('mask', mask)
+        #cv2.imshow('edges',edges)
+        #cv2.imshow('original',img)
+        #cv2.imshow('blur', blur)
 
         cv2.waitKey(1)
 
@@ -111,11 +111,11 @@ def listener():
     # run simultaneously.
     rospy.init_node('listener', anonymous=True)
     rospy.Subscriber("image_raw", Image, imageCallback)
-    pub = rospy.Publisher('between_the_cones', Float32MultiArray,queue_size=1)
+    pub = rospy.Publisher('cones/cmd_vel', Float32MultiArray,queue_size=1)
     rate = rospy.Rate(20)
     while not rospy.is_shutdown():
         msg = Float32MultiArray()
-        msg.data.append( [0,0,0,0,0,0,0,0,0,0,0])
+        msg.data.append([i/22. for i in range(11)])
         msg.data.append(desired_angle)
         msg.data = [y for x in msg.data for y in x]
         print msg.data
