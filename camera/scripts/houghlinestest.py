@@ -70,7 +70,7 @@ def imageCallback(data):
             total_confidence = 0            
 
             for a in range(0,11):
-                desired_angle.append( exp(-(a-desired_x)**2/2.0)*(350-upper_offset-cm[1])**2/((350.0-upper_offset)**2))
+                desired_angle.append(1*exp(-(a-desired_x)**2/2.0)*(350-upper_offset-cm[1])**2/((350.0-upper_offset)**2))
                 
             #print (desired_angle)
         else:
@@ -78,7 +78,6 @@ def imageCallback(data):
             for a in range(0,11):
                 desired_angle.append(0)
         resized_img = img[0:200, 0:320]
-        print(sum(desired_angle))
         resized_mask = mask[100:200, 0:320]
 
         edges = cv2.Canny(resized_img,50,150,apertureSize = 3)
@@ -118,7 +117,6 @@ def listener():
         msg.data.append([i/22. for i in range(11)])
         msg.data.append(desired_angle)
         msg.data = [y for x in msg.data for y in x]
-        print msg.data
         pub.publish(msg)
         rate.sleep()
     # spin() simply keeps python from exiting until this node is stopped
