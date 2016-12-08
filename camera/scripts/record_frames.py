@@ -79,7 +79,7 @@ def listener():
     rospy.Subscriber("start", Bool, startcallback)
     rospy.Subscriber("end", Bool, endcallback)
     rospy.Subscriber("cmd_vel", Twist, cmdcallback)
-    rospy.Subscriber("/my_camera/image_raw", Image, imageCallback)
+    rospy.Subscriber("image_raw", Image, imageCallback)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()

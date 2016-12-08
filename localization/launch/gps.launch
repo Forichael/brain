@@ -1,0 +1,19 @@
+<launch>
+	<node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform" respawn="true" output="screen">
+		<param name="frequency" value="30"/>
+		<param name="delay" value="3"/>
+		<param name="magnetic_declination_radians" value="-.254"/>
+		<param name="yaw_offset" value="1.570796327"/>
+		<param name="zero_altitude" value="true"/>
+		<param name="broadcast_utm_transform" value="true"/> <!-- ?? -->
+		<param name="publish_filtered_gps" value="true"/>
+		<param name="use_odometry_yaw" value="false"/>
+		<param name="wait_for_datum" value="false"/>
+
+		<remap from="/odometry/filtered" to="/odometry/filtered/global"/>
+		<remap from="/gps/fix" to="/fix"/>
+	</node>
+	<!--<node pkg="tf2_ros" type="static_transform_publisher" name="bl_gps" args="0 0 0 0 0 0 1 /base_link /gps"/>-->
+	<node pkg="tf" type="static_transform_publisher" name="bl_gps" args="0 0 0 0 0 0 base_link gps 100" />
+
+</launch>
