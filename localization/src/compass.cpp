@@ -1,7 +1,11 @@
 #include "ros/ros.h"
 #include "geometry_msgs/Vector3.h"
 #include "geometry_msgs/Vector3Stamped.h"
+#include "geometry_msgs/PoseWithCovarianceStamped.h"
+
 #include "std_msgs/Float32.h"
+
+geometry_msgs::PoseWithCovarianceStamped pose_msg;
 
 struct Point{
 	double x;
@@ -57,6 +61,7 @@ Point imu_max = {.86f, -.21f, .19f};
 Point imu_min = {.45f, -.72f, .01f};
 
 ros::Publisher compass_pub;
+ros::Publisher compass_pose_pub;
 std_msgs::Float32 compass_msg;
 
 geometry_msgs::Vector3 convert(const Point& p){
@@ -82,6 +87,16 @@ void magCallback(const geometry_msgs::Vector3Stamped::ConstPtr& msg)
 	compass_msg.data = heading_norm;
 	compass_pub.publish(compass_msg);
 
+	pose_msg.header.frame_id = "imu";
+	pose_msg.header.stamp = ros::Time::now();
+
+	pose_msg.pose.pose.orientation.z = heading;
+	double* c = pose_msg.pose.covariance.elems;
+	c[0] = c[7] = c[14] = 1e-3; // low covariance, higher confidence
+	c[21] = c[28] = c[35] = 1e-1; // x,y,z, rx, ry, rz
+
+	compass_pose_pub.publish(pose_msg);
+
 	return;
 }
 
@@ -90,6 +105,9 @@ int main(int argc, char* argv[]){
 	ros::init(argc,argv,"heading");
 	ros::NodeHandle n;
 	ros::Subscriber mag_sub = n.subscribe("/imu/mag", 1000, magCallback);
+
 	compass_pub = n.advertise<std_msgs::Float32>("/imu/heading", 1000, false);
+	compass_pose_pub = n.advertise<geometry_msgs::PoseWithCovarianceStamped>("/imu/compass_pose", 1000, false);
+
 	ros::spin();
 }

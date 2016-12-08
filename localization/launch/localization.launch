@@ -1,24 +1,38 @@
 <?xml version="1.0"?>
 <launch>
+	<param name="/use_sim_time" value="true" />
+
 	<!-- Start IMU -->
 	<include file="$(find localization)/launch/imu.launch"/>
-	<include file="$(find localization)/launch/lidar.launch"/>
+	<include file="$(find localization)/launch/hector.launch"/>
 
 	<!-- Visual Odometry from Camera -->
+	<!--<include file="$(find localization)/launch/visual_odometry.launch"/>-->
 
 	<!-- Wheel Odometry-->
-<!-- 	<node pkg= "localization" type="wheel_odometry_node" name="wheel_odometry"/> -->
+	<node pkg= "localization" type="wheel_odometry_node" name="wheel_odometry"/> 
+
+	<!-- Compass from IMU-->
+	<!--<node pkg="localization" type="compass_node" name="compass"/>-->
+	<!-- maybe not needed? -->
+
+	<!-- GPS -->
+	<include file="$(find localization)/launch/gps.launch"/>
 
 	<!-- Transforms -->
 	<!-- Currently. I'm not too sure if the IMU is aligned with the robot's coordinate system (x forwards, y left, z up) -->
-	<node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu 100" />
 
 	<!-- Placeholder for now, until we have a global frame ... we "start" at 0 -->
-	<node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" /> 
-
+	<!--<node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" />-->
 
 	<!-- Localization -->
-	<node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" output="screen">
-		<rosparam command="load" file="$(find localization)/config/localization.yaml" />
+	<node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization_local" output="screen">
+		<rosparam command="load" file="$(find localization)/config/localization_local.yaml" />
+		<remap from="/odometry/filtered" to="/odometry/filtered/local"/>
+	</node>
+
+	<node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization_global" output="screen">
+		<rosparam command="load" file="$(find localization)/config/localization_global.yaml" />
+		<remap from="/odometry/filtered" to="/odometry/filtered/global"/>
 	</node>
 </launch>

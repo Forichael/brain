@@ -62,6 +62,8 @@ void cmd_vel_cb(const geometry_msgs::TwistConstPtr& msg){
 	twist_msg.twist.twist.linear.x = v;
 
 	double* elems = twist_msg.twist.covariance.elems;
+
+	// x, y, z, rx, ry, rz
 	elems[0] = elems[7] = elems[14] = elems[21] = elems[28] = elems[35] = 1e-3;
 
 	twist_pub.publish(twist_msg);

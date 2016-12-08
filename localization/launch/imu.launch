@@ -25,18 +25,24 @@
 
 	<!-- Filling Orientation Information -->
 	
+	<!--
 	<node pkg="nodelet" type="nodelet" name="ImuFilterNodelet" 
 		args="load imu_filter_madgwick/ImuFilterNodelet imu_manager" 
 		output="screen">
 
 		<param name="use_mag" value="true"/>
-		<param name="world_frame" value="enu"/>
+		<param name="world_frame" value="nwu"/>
 		<param name="use_magnetic_field_msg" value="false"/>
 		<param name="publish_tf" value="true"/>
 
 	</node>
+	-->
 
 	<node pkg="localization" type="compass_node" name="compass"/>
+
+	<!-- IMU Coincident with robot -->
+	<node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu 100" />
+
 
 <!--
 	 Unstable!
