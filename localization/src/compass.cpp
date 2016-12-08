@@ -53,12 +53,13 @@ Point min(const Point& lhs, const Point& rhs){
 	return res;
 }
 
-const Point imu_offset = {0.65f, -0.465f, 0.33f};
-const Point imu_scale = {2.0 / 0.41f, 2.0 / 0.51f,  2.0f}; // TODO : fix z scale
-const float heading_offset = 0.99;
+const Point imu_offset = {-.1f, -1.23f, .1f};// {0.65f, -0.465f, 0.33f};
+const Point imu_scale = {2.0 * 3.1415 / 0.24f, 2.0*3.1415 / 0.38f,  2.0f}; // TODO : fix z scale
+const float heading_offset = 1.87;
 
-Point imu_max = {.86f, -.21f, .19f};
-Point imu_min = {.45f, -.72f, .01f};
+Point imu_max = {.02f, -1.04f, .19f};
+Point imu_min = {-.22f, -1.42f, .01f};
+
 
 ros::Publisher compass_pub;
 ros::Publisher compass_pose_pub;
