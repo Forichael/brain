@@ -1,12 +1,15 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(alpha_localization)
+project(alpha_main)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  std_msgs
+  alpha_arbiter
+  alpha_image_proc
+  alpha_localization
+  alpha_manual_controller
+  alpha_obstacle_avoid
 )
 
 ## System dependencies are found with CMake's conventions
@@ -66,7 +69,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -100,8 +103,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES localization
-#  CATKIN_DEPENDS roscpp std_msgs
+#  LIBRARIES alpha_main
+#  CATKIN_DEPENDS alpha_arbiter alpha_image_proc alpha_localization alpha_manual_controller alpha_obstacle_avoid
 #  DEPENDS system_lib
 )
 
@@ -117,36 +120,27 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(localization
-#   src/${PROJECT_NAME}/localization.cpp
+# add_library(alpha_main
+#   src/${PROJECT_NAME}/alpha_main.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(localization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(alpha_main ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
- add_executable(midbrain_node src/midbrain_node.cpp)
- add_executable(compass_node src/compass.cpp)
- add_executable(wheel_odometry_node src/wheel_odometry.cpp)
+# add_executable(alpha_main_node src/alpha_main_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
- add_dependencies(midbrain_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(alpha_main_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(midbrain_node
-   ${catkin_LIBRARIES}
- )
+# target_link_libraries(alpha_main_node
+#   ${catkin_LIBRARIES}
+# )
 
- target_link_libraries(compass_node
-   ${catkin_LIBRARIES}
- )
-
- target_link_libraries(wheel_odometry_node
-   ${catkin_LIBRARIES}
- )
 #############
 ## Install ##
 #############
@@ -162,7 +156,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS localization localization_node
+# install(TARGETS alpha_main alpha_main_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -187,7 +181,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_localization.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_alpha_main.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

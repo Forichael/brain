@@ -1,13 +1,14 @@
 <?xml version="1.0"?>
 <package>
-  <name>alpha_localization</name>
+  <name>alpha_main</name>
   <version>0.0.0</version>
-  <description>The localization package</description>
+  <description>The alpha_main package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="thuc@todo.todo">thuc</maintainer>
+  <maintainer email="eric.miller@students.olin.edu">Eric Miller</maintainer>
+  <maintainer email="jamie@students.olin.edu">Jamie</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -19,7 +20,7 @@
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/localization</url> -->
+  <!-- <url type="website">http://wiki.ros.org/alpha_main</url> -->
 
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
@@ -40,18 +41,16 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>nmea_msgs</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>nmea_msgs</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>nav_msgs</run_depend>
-  <run_depend>robot_localization</run_depend>
+  <build_depend>alpha_arbiter</build_depend>
+  <build_depend>alpha_image_proc</build_depend>
+  <build_depend>alpha_localization</build_depend>
+  <build_depend>alpha_manual_controller</build_depend>
+  <build_depend>alpha_obstacle_avoid</build_depend>
+  <run_depend>alpha_arbiter</run_depend>
+  <run_depend>alpha_image_proc</run_depend>
+  <run_depend>alpha_localization</run_depend>
+  <run_depend>alpha_manual_controller</run_depend>
+  <run_depend>alpha_obstacle_avoid</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
