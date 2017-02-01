@@ -1,5 +1,6 @@
-#include <Servo.h>
 #include <ros.h>
+ros::NodeHandle nh;
+#include <Servo.h>
 #include <geometry_msgs/Twist.h>
 #include "odometry.h"
 
@@ -16,8 +17,6 @@ const int DELTA_SPEED = 5;
 
 int speed_l_dst = 0.0;
 int speed_r_dst = 0.0;
-
-ros::NodeHandle nh;
 
 struct Motor{
 	Servo motor;
@@ -110,5 +109,5 @@ void loop()
 	motor_l.write();
 	motor_r.write();
 
-	loopEncoder();
+	rightEncoder.loopEncoder();
 }

@@ -24,17 +24,13 @@ public:
     //   Best Performance: both pins have interrupt capability
     //   Good Performance: only the first pin has interrupt capability
     //   Low Performance:  neither pin has interrupt capability
-    SpeedEncoder(int pin1, int pin2){
-        encoder = Encoder(pin1, pin2);
-    }
+    SpeedEncoder(int pin1, int pin2): encoder(pin1, pin2) {    }
 
 
     // Returns position in ticks
     float getEncoderVal(){
         return encoder.read();
     }
-
-
 
 
     // Returns speed in ticks / second
@@ -63,8 +59,6 @@ public:
             }
         }
     }
-
-
 
     bool printIfNewEncoder(){
         static long oldPosition  = -999;
