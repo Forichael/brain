@@ -1,16 +1,26 @@
+#include <Encoder.h>
+
+Encoder rightEncoder(18, 19);
+
 void setup()
 {
-	pinMode(12, INPUT);
-	pinMode(13, INPUT);	
+	pinMode(18, INPUT);
+	pinMode(19, INPUT);	
 	Serial.begin(9600);
 }
 
 void loop()
 {
-	delay(50);
-	Serial.print(digitalRead(12));
+	static int i = 0;
+	i++;
+	delay(200);
+	Serial.print(i);
 	Serial.print("\t");
-	Serial.print(digitalRead(13));
+	Serial.print(digitalRead(18));
+	Serial.print("\t");
+	Serial.print(digitalRead(19));
+	Serial.print("\t");
+	Serial.print(rightEncoder.read());
 	Serial.print("\t");
 	Serial.println();
 }

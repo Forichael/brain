@@ -1,8 +1,9 @@
 #include <ros.h>
 ros::NodeHandle nh;
+
 #include <Servo.h>
 #include <geometry_msgs/Twist.h>
-#include "odometry.h"
+#include "encoders.h"
 
 const int MOTOR_L_PIN = 2;
 const int MOTOR_R_PIN = 3;
@@ -96,8 +97,10 @@ void setup()
 	motor_l.stop();
 	motor_r.stop();
 
-	nh.subscribe(sub);
 	nh.initNode();
+	nh.subscribe(sub);
+
+	setupEncoders();
 }
 
 void loop()
@@ -109,5 +112,5 @@ void loop()
 	motor_l.write();
 	motor_r.write();
 
-	loopOdometry();
+	loopEncoders(motor_r.cur);
 }
