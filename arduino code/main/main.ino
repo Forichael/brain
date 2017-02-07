@@ -109,5 +109,5 @@ void loop()
 	motor_l.write();
 	motor_r.write();
 
-	rightEncoder.loopEncoder();
+	loopOdometry();
 }

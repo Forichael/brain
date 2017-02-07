@@ -29,11 +29,8 @@ const double WHEELBASE = .7; // in meters
 unsigned long current_time, last_time;
 double x=0, y=0, th=0;
 
-// Main functions
-void setupOdometry(){
-    current_time = last_time = micros();
-}
 
+// Helper functions
 geometry_msgs::Quaternion quaternionFromYaw(double th){
     // Taken from http://answers.ros.org/question/9772/quaternions-orientation-representation/?answer=14285#post-id-14285
     geometry_msgs::Quaternion quat;
@@ -44,7 +41,7 @@ geometry_msgs::Quaternion quaternionFromYaw(double th){
     return quat;
 }
 
-nav_msgs::Odometry updateOdometry(){
+void updateOdometry(){
     
     current_time = micros();
 
@@ -94,4 +91,26 @@ nav_msgs::Odometry updateOdometry(){
     odom_pub.publish(&odom_msg);
 
     last_time = current_time;
+}
+
+
+// Main functions
+void setupOdometry(){
+    current_time = last_time = micros();
+}
+
+const int ODOM_LOOP_TIME = 1000; // ms
+
+void loopOdometry(){
+    rightEncoder.loopEncoder();
+    #ifdef HAS_LEFT_ENCODER
+    leftEncoder.loopEncoder();
+    #endif
+
+    static unsigned long lastOdomTime = millis();
+    
+    if (millis() - lastOdomTime >= ODOM_LOOP_TIME) {
+        lastOdomTime = millis();
+        updateOdometry();
+    }
 }
