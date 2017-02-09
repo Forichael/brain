@@ -4,6 +4,7 @@ ros::NodeHandle nh;
 #include <Servo.h>
 #include <geometry_msgs/Twist.h>
 #include "encoders.h"
+#include "distanceSensors.h"
 
 const int MOTOR_L_PIN = 2;
 const int MOTOR_R_PIN = 3;
@@ -101,6 +102,7 @@ void setup()
 	nh.subscribe(sub);
 
 	setupEncoders();
+	setupDistanceSensors();
 }
 
 void loop()
@@ -113,4 +115,5 @@ void loop()
 	motor_r.write();
 
 	loopEncoders(motor_r.cur);
+	loopDistanceSensors();
 }
