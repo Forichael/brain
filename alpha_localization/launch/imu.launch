@@ -42,13 +42,15 @@
 	<!-- IMU Coincident with robot -->
 	<node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu 100" />
 
-	<node pkg="localization" type="compass_node" name="compass"/>
-	<node pkg="localization" type="vec3tomag.py" name="vec3tomag"/>
+	<!--<node pkg="alpha_localization" type="compass_node" name="compass"/>-->
+	<node pkg="alpha_localization" type="vec3tomag.py" name="vec3tomag"/>
+	<!--<node pkg="alpha_localization" type="fix_imu.py" name="fix_imu"/>-->
 
 	<node pkg="imu_complementary_filter" type="complementary_filter_node" name="imu_complementary_filter">
+		<!--<remap from="/imu/data_raw" to="/imu_fixed"/>-->
 		<remap from="/imu/mag" to="/imu/magnetic_field"/>
 		<param name="use_mag" value="true"/>
-		<param name="publish_tf" value="true"/>
+		<param name="publish_tf" value="false"/>
 	</node>
 
 	<!-- Coordinate Transformations -->
