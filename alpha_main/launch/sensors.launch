@@ -2,6 +2,6 @@
 <launch>
 	<include file="$(find alpha_localization)/launch/imu.launch"/>
 	<node name="camera" pkg="uvc_camera" type="uvc_camera_node" args="_device:=/dev/video0"/>
-	<node name="lidar" pkg="urg_node" type="urg_node" args="_serial_port:=/dev/ttyACM1"/>
-	<node name="gps" pkg="nmea_navsat_driver" type="nmea_serial_driver" args="_port:=/dev/ttyACM2 _baud:=115200"/>
+	<node name="lidar" pkg="urg_node" type="urg_node" args="_serial_port:=/dev/serial/by-id/usb-Hokuyo_Data_Flex_for_USB_URG-Series_USB_Driver-if00"/>
+	<node name="gps" pkg="nmea_navsat_driver" type="nmea_serial_driver" args="_port:=/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_7_-_GPS_GNSS_Receiver-if00 _baud:=115200"/>
 </launch>
