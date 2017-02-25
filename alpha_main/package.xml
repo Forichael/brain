@@ -41,16 +41,11 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>alpha_arbiter</build_depend>
-  <build_depend>alpha_image_proc</build_depend>
-  <build_depend>alpha_localization</build_depend>
-  <build_depend>alpha_manual_controller</build_depend>
-  <build_depend>alpha_obstacle_avoid</build_depend>
-  <run_depend>alpha_arbiter</run_depend>
-  <run_depend>alpha_image_proc</run_depend>
-  <run_depend>alpha_localization</run_depend>
-  <run_depend>alpha_manual_controller</run_depend>
-  <run_depend>alpha_obstacle_avoid</run_depend>
+
+  <run_depend>alpha_sensors</run_depend> <!-- sensors -->
+  <run_depend>alpha_description</run_depend> <!-- URDF tf -->
+  <run_depend>alpha_localization</run_depend> <!-- localization -->
+  <run_depend>alpha_navigation</run_depend> <!-- navigation -->
 
 
   <!-- The export tag contains other, unspecified, tags -->

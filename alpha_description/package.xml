@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package>
+  <name>alpha_description</name>
+  <version>0.0.0</version>
+  <description>Description for Alphabot; SysRobo SP2017</description>
+
+  <maintainer email="yoonyoung.cho@students.olin.edu">Yoonyoung Cho</maintainer>
+  <license>BSD</license>
+  <url type="repository">https://github.com/RoboSys-Alphabot</url>
+  <author email="yoonyoung.cho@students.olin.edu">Yoonyoung Cho</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>urdf</run_depend>
+  <run_depend>xacro</run_depend>
+  <run_depend>ur_description</run_depend>
+  <run_depend>lms1xx</run_depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>

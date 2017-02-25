@@ -1,4 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-	<node pkg="rosserial_python" type="serial_node.py" name="rosserial" args="_port:=/dev/serial/by-id/usb-Arduino_Srl_Arduino_Mega_8553130323135141F0D0-if00 _baud:=57600" output="screen"/>
-</launch>

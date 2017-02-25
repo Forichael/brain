@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="calibrate" default="false"/>
+
+	<group ns="alpha">
+		<node name="camera" pkg="uvc_camera" type="uvc_camera_node" args="_device:=/dev/video0"/>
+	</group>
+
+	<!-- cailbrate camera -->
+	<group if="$(arg calibrate)">
+		<node name="calibration" pkg="camera_calibration" type="cameracalibrator.py" args="--size=7x5 --square=0.0284 image:=/alpha/image_raw camera:=/alpha" output="screen"/>
+	</group>
+
+	<!-- rectify image -->
+	<group unless="$(arg calibrate)">
+		<node name="image_proc" pkg="image_proc" type="image_proc"/> <!-- image:=/alpha/image_raw -->
+	</group>
+</launch>
