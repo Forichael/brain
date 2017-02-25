@@ -8,5 +8,5 @@
 	<param name="~base_width" value="1.016" />
 	<node pkg="differential_drive" type="diff_tf.py" name="diff_drive" output="screen"/>
 
-	<!--<node pkg="rviz" type="rviz" name="rviz" args="-d $(find redbot_odom)/launch/odom.rviz" output="screen"/>-->
+	<!--<node pkg="rviz" type="rviz" name="rviz" args="-d $(find alpha_localization)/launch/odom.rviz" output="screen"/>-->
 </launch>
