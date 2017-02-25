@@ -82,8 +82,6 @@ qtcreator-*
 .#*
 
 # Catkin custom files
-CATKIN_IGNORE
-
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
