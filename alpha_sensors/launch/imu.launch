@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
 <launch>
+	<!-- TODO : recalibrate IMU -->
+	<!-- TODO : refill parameters in this file -->
+
 	<!-- Nodelet manager --> 
 	<node pkg="nodelet" type="nodelet" name="imu_manager" args="manager" output="screen"/>
 
@@ -42,9 +45,7 @@
 	<!-- IMU Coincident with robot -->
 	<node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu 100" />
 
-	<!--<node pkg="alpha_localization" type="compass_node" name="compass"/>-->
-	<node pkg="alpha_localization" type="vec3tomag.py" name="vec3tomag"/>
-	<!--<node pkg="alpha_localization" type="fix_imu.py" name="fix_imu"/>-->
+	<node pkg="alpha_sensors" type="vec3tomag.py" name="vec3tomag"/>
 
 	<node pkg="imu_complementary_filter" type="complementary_filter_node" name="imu_complementary_filter">
 		<!--<remap from="/imu/data_raw" to="/imu_fixed"/>-->

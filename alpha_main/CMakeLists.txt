@@ -5,10 +5,6 @@ project(alpha_main)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-	alpha_sensors
-	alpha_description
-	alpha_localization
-	alpha_navigation
 	roscpp
 	std_msgs
 )

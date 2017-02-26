@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-	<!-- TODO : replace this tf node with a proper sensor thing! -->
-	<node pkg="tf" type="static_transform_publisher" name="b2a" args=".1778 .1651 0 0 0 0 base_link android 100" /> <!-- align x forward -->
-	<!--<node pkg="tf" type="static_transform_publisher" name="m2o" args="0 0 0 0 0 0 map odom 100" />--> <!-- align x forward -->
+		<!--<node pkg="tf" type="static_transform_publisher" name="m2o" args="0 0 0 0 0 0 map odom 100" />--> <!-- align x forward -->
 
 	<!-- wheel odometry -->
 	<include file="$(find alpha_localization)/launch/odom.launch"/>
