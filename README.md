@@ -48,23 +48,10 @@ Robotic Systems Integration, Olin College of Engineering, SP2017
 	roscore
 	```
 
-1. Launch rosserial to communicate with the arduino:
-
-	```bash
-	roslaunch alpha_main rosserial.launch
-	```
-
 1. Make sure that the android is connected to your ros master.
 
-1. Run the wheel odometry node:
+1. Bring the Robot UP:
 
 	```bash
-	roslaunch alpha_main odom.launch
+	roslaunch alpha_main bringup.launch
 	```
-
-1. Run the localization node:
-
-	```bash
-	roslaunch alpha_main localization.launch
-	```
-
