@@ -41,10 +41,6 @@
 
 	-->
 
-
-	<!-- IMU Coincident with robot -->
-	<node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu 100" />
-
 	<node pkg="alpha_sensors" type="vec3tomag.py" name="vec3tomag"/>
 
 	<node pkg="imu_complementary_filter" type="complementary_filter_node" name="imu_complementary_filter">

@@ -1,13 +1,14 @@
 //
 // Created by eric on 1/29/17.
 //
+#include <ros.h>
 #include <Encoder.h>
 #include <Arduino.h>
 #include <std_msgs/Int16.h>
 
 #ifndef MAIN_ODOMETRY_H
 #define MAIN_ODOMETRY_H
-
+extern ros::NodeHandle nh;
 // Setup encoder data
 Encoder rightEncoder(18, 20);
 Encoder leftEncoder(19, 21);
