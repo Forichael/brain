@@ -27,5 +27,5 @@
 	```bash
 	export ROS_MASTER_URI=http://$(ODROID_IP):11311
 	export ROS_IP=$(YOUR_IP)
-	rviz -d "$(rospack find alpha_sensors)/launch/view_sensors.rviz" # Visu
+	rviz -d "$(rospack find alpha_sensors)/launch/view_sensors.rviz"
 	```
