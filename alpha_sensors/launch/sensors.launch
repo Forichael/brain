@@ -3,11 +3,6 @@
 	<!-- sensors : android(imu/gps/camera) | phidgets imu | camera(1 or 2) | Hokuyo Lidar | GPS | IR/Sonar -->
 	<!-- android brings itself up, imu/gps/camera -->
 
-	<!-- TODO : replace this tf node with a proper sensor thing! -->
-	<node pkg="tf" type="static_transform_publisher" name="b2a" args=".1778 .1651 0 0 0 0 base_link android 100" /> <!-- align x forward -->
-	<!-- TODO : replace this tf node with a proper description! -->
-	<node pkg="tf" type="static_transform_publisher" name="b2l" args="0 0 0 0 0 0 base_link laser 100" /> <!-- base_link to lidar -->
-
 	<include file="$(find alpha_sensors)/launch/imu.launch"/>
 	<include file="$(find alpha_sensors)/launch/camera.launch"/>
 	<node name="lidar" pkg="urg_node" type="urg_node" args="_serial_port:=/dev/serial/by-id/usb-Hokuyo_Data_Flex_for_USB_URG-Series_USB_Driver-if00"/>
