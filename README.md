@@ -5,6 +5,10 @@ Repository for **Alphabot**, an autonomous ground-rover whose goal is to dynamic
 
 Robotic Systems Integration, Olin College of Engineering, SP2017
 
+## Connectivity Diagram
+
+![connectivity](imaegs/graph.png)
+
 ## Starting Up
 
 1. Make sure that the battery is reasonably charged.
