@@ -25,6 +25,7 @@ struct Motor{
 
 	void attach(const int pin){
 		this->pin = pin;
+		pinMode(pin, OUTPUT);
 		motor.attach(pin);
 	}
 

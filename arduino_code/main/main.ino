@@ -10,6 +10,8 @@ const int MOTOR_L_PIN = 2;
 const int MOTOR_R_PIN = 3;
 const int E_STOP_PIN = 7;
 
+// setup Parameters for the motor
+// without these defined, it won't compile!
 int Motor::STOP_SPEED = 1500;
 int Motor::MIN_SPEED = 1100;
 int Motor::MAX_SPEED = 1900;
@@ -36,8 +38,6 @@ bool readEstop(){
 void setup()
 {
 	//Serial.begin(9600);
-	pinMode(MOTOR_L_PIN, OUTPUT);
-	pinMode(MOTOR_R_PIN, OUTPUT);
 	pinMode(E_STOP_PIN, INPUT);
 
 	motor_l.attach(MOTOR_L_PIN);
