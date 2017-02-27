@@ -10,7 +10,7 @@
 
 
 	<param name="robot_description"
-		command="$(find xacro)/xacro.py '$(find alpha_description)/urdf/alphabot.urdf.xacro'" />
+		command="$(find xacro)/xacro.py '$(find alpha_description)/urdf/alphabot_v2.urdf.xacro'" />
 
 	<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-urdf -model alphabot -param robot_description" />
 

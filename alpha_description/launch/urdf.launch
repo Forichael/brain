@@ -1,6 +1,10 @@
 <launch>
 	<!--<param name="robot_description" textfile="$(find alpha_description)/urdf/robot.urdf"/>-->
 	<param name="robot_description"
-		command="$(find xacro)/xacro.py '$(find alpha_description)/urdf/alphabot.urdf.xacro'" />
-	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen"/>
+		command="$(find xacro)/xacro.py '$(find alpha_description)/urdf/alphabot_v2.urdf.xacro'" />
+
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen">
+		<remap from="/joint_states" to="/alphabot/joint_states" />
+	</node>
+
 </launch>

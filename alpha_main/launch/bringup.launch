@@ -5,7 +5,7 @@
 
 	<!-- transforms -->
 	<!-- TODO : remake URDF file -->
-	<!--<include file="$(find alpha_description)/launch/urdf.launch"/>-->
+	<include file="$(find alpha_description)/launch/urdf.launch"/>
 
 	<!-- sensors -->
 	<include file="$(find alpha_sensors)/launch/sensors.launch"/>

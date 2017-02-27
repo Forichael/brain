@@ -3,7 +3,7 @@
 	<arg name="gui" default="True" /> <!-- Joint Position Control -->
 
 	<param name="robot_description"
-		command="$(find xacro)/xacro.py '$(find alpha_description)/urdf/alphabot.urdf.xacro'" />
+		command="$(find xacro)/xacro.py '$(find alpha_description)/urdf/alphabot_v2.urdf.xacro'" />
 
 	<param
 		name="use_gui"

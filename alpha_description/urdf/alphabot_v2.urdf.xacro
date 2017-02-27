@@ -1,0 +1,758 @@
+<robot name="alphabot" xmlns:xacro="http://ros.org/wiki/xacro">
+	<xacro:macro name="wheel_xmission" params="wheel_prefix">
+		<transmission name="${wheel_prefix}_wheel_trans">
+			<type>transmission_interface/SimpleTransmission</type>
+			<actuator name="${wheel_prefix}_wheel_motor">
+				<hardwareInterface>VelocityJointInterface</hardwareInterface>
+				<mechanicalReduction>1</mechanicalReduction>
+			</actuator>
+			<joint name="${wheel_prefix}_wheel_joint">
+				<hardwareInterface>VelocityJointInterface</hardwareInterface>
+			</joint>
+		</transmission>
+	</xacro:macro>
+
+	<link
+		name="base_link">
+		<inertial>
+			<origin
+				xyz="-0.007246 -2.8366E-14 -0.0057555"
+				rpy="0 0 0" />
+			<mass
+				value="23.254" />
+			<inertia
+				ixx="0.27206"
+				ixy="3.6258E-17"
+				ixz="-0.02852"
+				iyy="0.5236"
+				iyz="4.4998E-16"
+				izz="0.72269" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/base_link.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.79216 0.81961 0.93333 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/base_link.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<link
+		name="camera">
+		<inertial>
+			<origin
+				xyz="-0.025202 0 0"
+				rpy="0 0 0" />
+			<mass
+				value="0.029152" />
+			<inertia
+				ixx="2.6204E-06"
+				ixy="3.3169E-23"
+				ixz="2.647E-23"
+				iyy="7.947E-06"
+				iyz="1.2625E-22"
+				izz="7.947E-06" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/camera.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.75294 0.75294 0.75294 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/camera.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="camera_joint"
+		type="fixed">
+		<origin
+			xyz="0.17006355224945 0 0.146895762835769"
+			rpy="2.0693692417678E-15 0.174532925199438 4.21293730628588E-16" />
+		<parent
+			link="base_link" />
+		<child
+			link="camera" />
+		<axis
+			xyz="0 0 0" />
+	</joint>
+	<link
+		name="lidar">
+		<inertial>
+			<origin
+				xyz="-5.6272E-05 5.5511E-17 0"
+				rpy="0 0 0" />
+			<mass
+				value="0.05174" />
+			<inertia
+				ixx="1.3731E-05"
+				ixy="2.7533E-22"
+				ixz="-2.0531E-22"
+				iyy="1.3757E-05"
+				iyz="-2.9797E-22"
+				izz="9.3293E-06" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/lidar.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.79216 0.81961 0.93333 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/lidar.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="lidar_joint"
+		type="fixed">
+		<origin
+			xyz="0.22225 0 0.0432816520819935"
+			rpy="2.18547839493141E-15 4.37095678986282E-15 -1.22464679914726E-16" />
+		<parent
+			link="base_link" />
+		<child
+			link="lidar" />
+		<axis
+			xyz="0 0 0" />
+	</joint>
+	<link
+		name="imu">
+		<inertial>
+			<origin
+				xyz="0.00010302 -5.5511E-17 0.0067256"
+				rpy="0 0 0" />
+			<mass
+				value="0.01784" />
+			<inertia
+				ixx="2.6279E-06"
+				ixy="3.4682E-22"
+				ixz="2.344E-09"
+				iyy="2.5418E-06"
+				iyz="-1.0089E-23"
+				izz="4.5605E-06" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/imu.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.29804 0.29804 0.29804 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/imu.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="imu_joint"
+		type="fixed">
+		<origin
+			xyz="0.158750000000001 -0.0654050000000286 0.100329999999999"
+			rpy="2.18547839493141E-15 4.37095678986282E-15 9.55263162942396E-30" />
+		<parent
+			link="base_link" />
+		<child
+			link="imu" />
+		<axis
+			xyz="0 0 0" />
+	</joint>
+	<link
+		name="gps">
+		<inertial>
+			<origin
+				xyz="-0.00069629 -1.2961E-06 0.0084361"
+				rpy="0 0 0" />
+			<mass
+				value="0.034682" />
+			<inertia
+				ixx="4.6607E-06"
+				ixy="1.021E-09"
+				ixz="4.562E-09"
+				iyy="7.5891E-06"
+				iyz="-1.7358E-13"
+				izz="1.0608E-05" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/gps.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.79608 0.82353 0.93725 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/gps.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="gps_joint"
+		type="fixed">
+		<origin
+			xyz="0.158750000000001 -0.149225000000029 0.100329999999999"
+			rpy="2.18547839493141E-15 4.37095678986282E-15 9.35060506767106E-17" />
+		<parent
+			link="base_link" />
+		<child
+			link="gps" />
+		<axis
+			xyz="0 0 0" />
+	</joint>
+	<link
+		name="l_sonar">
+		<inertial>
+			<origin
+				xyz="-0.008662 0 -6.9389E-18"
+				rpy="0 0 0" />
+			<mass
+				value="0.0030797" />
+			<inertia
+				ixx="1.1108E-07"
+				ixy="-2.3135E-22"
+				ixz="-4.8705E-24"
+				iyy="1.2654E-07"
+				iyz="-1.7921E-23"
+				izz="1.2654E-07" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/l_sonar.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.79216 0.81961 0.93333 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/l_sonar.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="l_sonar_joint"
+		type="fixed">
+		<origin
+			xyz="-0.0084119518851265 0.193399999999975 -0.0122434502790483"
+			rpy="-2.61200588782342E-15 -5.67695973377457E-15 1.57079632679489" />
+		<parent
+			link="base_link" />
+		<child
+			link="l_sonar" />
+		<axis
+			xyz="0 0 0" />
+	</joint>
+	<link
+		name="r_sonar">
+		<inertial>
+			<origin
+				xyz="-0.008662 0 -6.9389E-18"
+				rpy="0 0 0" />
+			<mass
+				value="0.0030797" />
+			<inertia
+				ixx="1.1108E-07"
+				ixy="2.6257E-23"
+				ixz="1.572E-23"
+				iyy="1.2654E-07"
+				iyz="3.8069E-23"
+				izz="1.2654E-07" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/r_sonar.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.79216 0.81961 0.93333 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/r_sonar.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="r_sonar_joint"
+		type="fixed">
+		<origin
+			xyz="-0.0084119518851255 -0.193400000000028 -0.0122434502790499"
+			rpy="6.10348722666658E-15 2.2872733366983E-15 -1.5707963267949" />
+		<parent
+			link="base_link" />
+		<child
+			link="r_sonar" />
+		<axis
+			xyz="0 0 0" />
+	</joint>
+	<link
+		name="l_ir">
+		<inertial>
+			<origin
+				xyz="-0.0078572 -0.00067482 0.00055715"
+				rpy="0 0 0" />
+			<mass
+				value="0.0033937" />
+			<inertia
+				ixx="3.2589E-07"
+				ixy="-2.4139E-10"
+				ixz="-4.9755E-09"
+				iyy="1.6137E-07"
+				iyz="-1.8301E-11"
+				izz="3.5725E-07" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/l_ir.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.1098 0.1098 0.1098 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/l_ir.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="l_ir_joint"
+		type="fixed">
+		<origin
+			xyz="0.303548665430622 0.110287499999972 -0.0377191719473273"
+			rpy="2.66353910362929E-15 0.174532925199445 5.38119988418668E-16" />
+		<parent
+			link="base_link" />
+		<child
+			link="l_ir" />
+		<axis
+			xyz="0 0 0" />
+	</joint>
+	<link
+		name="r_ir">
+		<inertial>
+			<origin
+				xyz="-0.0078572 -0.00067482 0.00055715"
+				rpy="0 0 0" />
+			<mass
+				value="0.0033937" />
+			<inertia
+				ixx="3.2589E-07"
+				ixy="-2.4139E-10"
+				ixz="-4.9755E-09"
+				iyy="1.6137E-07"
+				iyz="-1.8301E-11"
+				izz="3.5725E-07" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/r_ir.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.1098 0.1098 0.1098 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/r_ir.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="r_ir_joint"
+		type="fixed">
+		<origin
+			xyz="0.303548665430622 -0.108787500000028 -0.0377191719473278"
+			rpy="2.66353910362929E-15 0.174532925199445 5.38119988418671E-16" />
+		<parent
+			link="base_link" />
+		<child
+			link="r_ir" />
+		<axis
+			xyz="0 0 0" />
+	</joint>
+	<link
+		name="fl_wheel">
+		<inertial>
+			<origin
+				xyz="0 -3.4694E-18 0.00047656"
+				rpy="0 0 0" />
+			<mass
+				value="0.29665" />
+			<inertia
+				ixx="0.0003093"
+				ixy="3.8238E-37"
+				ixz="-7.4027E-22"
+				iyy="0.0003093"
+				iyz="6.1132E-37"
+				izz="0.00058876" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/fl_wheel.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.79216 0.81961 0.93333 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/fl_wheel.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="fl_wheel_joint"
+		type="continuous">
+		<origin
+			xyz="0.17145 0.196849999999972 -0.0444500000000003"
+			rpy="1.57079632679489 -4.37095678986282E-15 -3.14159265358979" />
+		<parent
+			link="base_link" />
+		<child
+			link="fl_wheel" />
+		<axis
+			xyz="0 0 1" />
+	</joint>
+	<link
+		name="fr_wheel">
+		<inertial>
+			<origin
+				xyz="0 3.4694E-18 0.00047656"
+				rpy="0 0 0" />
+			<mass
+				value="0.29665" />
+			<inertia
+				ixx="0.0003093"
+				ixy="1.717E-20"
+				ixz="2.2717E-22"
+				iyy="0.0003093"
+				iyz="4.4044E-34"
+				izz="0.00058876" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/fr_wheel.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.79216 0.81961 0.93333 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/fr_wheel.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="fr_wheel_joint"
+		type="continuous">
+		<origin
+			xyz="0.17145 -0.196850000000028 -0.0444500000000012"
+			rpy="1.5707963267949 2.59092834675909E-14 5.26759889920884E-17" />
+		<parent
+			link="base_link" />
+		<child
+			link="fr_wheel" />
+		<axis
+			xyz="0 0 1" />
+	</joint>
+	<link
+		name="bl_wheel">
+		<inertial>
+			<origin
+				xyz="0 -3.4694E-18 0.00047656"
+				rpy="0 0 0" />
+			<mass
+				value="0.29665" />
+			<inertia
+				ixx="0.0003093"
+				ixy="3.8238E-37"
+				ixz="-1.1754E-21"
+				iyy="0.0003093"
+				iyz="6.1132E-37"
+				izz="0.00058876" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/bl_wheel.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.79216 0.81961 0.93333 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/bl_wheel.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="bl_wheel_joint"
+		type="continuous">
+		<origin
+			xyz="-0.17145 0.196849999999972 -0.0444499999999988"
+			rpy="1.57079632679489 -4.37095678986282E-15 -3.14159265358979" />
+		<parent
+			link="base_link" />
+		<child
+			link="bl_wheel" />
+		<axis
+			xyz="0 0 1" />
+	</joint>
+	<link
+		name="br_wheel">
+		<inertial>
+			<origin
+				xyz="-1.1102E-16 3.4694E-18 0.00047656"
+				rpy="0 0 0" />
+			<mass
+				value="0.29665" />
+			<inertia
+				ixx="0.0003093"
+				ixy="3.6111E-35"
+				ixz="-1.1754E-21"
+				iyy="0.0003093"
+				iyz="6.9821E-37"
+				izz="0.00058876" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/br_wheel.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0.79216 0.81961 0.93333 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/br_wheel.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="br_wheel_joint"
+		type="continuous">
+		<origin
+			xyz="-0.17145 -0.196850000000028 -0.0444499999999997"
+			rpy="1.5707963267949 4.14891218493779E-15 9.06735794264922E-30" />
+		<parent
+			link="base_link" />
+		<child
+			link="br_wheel" />
+		<axis
+			xyz="0 0 1" />
+	</joint>
+	<link
+		name="android">
+		<inertial>
+			<origin
+				xyz="0 5.498E-05 0.0040751"
+				rpy="0 0 0" />
+			<mass
+				value="0.081695" />
+			<inertia
+				ixx="0.00013435"
+				ixy="5.2477E-22"
+				ixz="6.8101E-20"
+				iyy="3.3244E-05"
+				iyz="-2.9022E-09"
+				izz="0.00016667" />
+		</inertial>
+		<visual>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/android.STL" />
+			</geometry>
+			<material
+				name="">
+				<color
+					rgba="0 0.11373 0.21569 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin
+				xyz="0 0 0"
+				rpy="0 0 0" />
+			<geometry>
+				<mesh
+					filename="package://alpha_description/meshes/android.STL" />
+			</geometry>
+		</collision>
+	</link>
+	<joint
+		name="android_joint"
+		type="fixed">
+		<origin
+			xyz="0.158749999999999 0.172719999999971 0.100329999999998"
+			rpy="2.18547839493143E-15 -9.31741280935343E-15 3.49148133884311E-15" />
+		<parent
+			link="base_link" />
+		<child
+			link="android" />
+		<axis
+			xyz="0 0 0" />
+	</joint>
+
+	<wheel_xmission wheel_prefix="fl"/>
+	<wheel_xmission wheel_prefix="fr"/>
+	<wheel_xmission wheel_prefix="bl"/>
+	<wheel_xmission wheel_prefix="br"/>
+
+	<gazebo>
+		<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+			<robotNamespace>alphabot</robotNamespace>
+			<robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+		</plugin>
+	</gazebo>
+
+
+</robot>
