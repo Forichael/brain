@@ -16,18 +16,18 @@ sensor_msgs::Range right_range_msg;
 ros::Publisher left_pub_range( "/IR/left", &left_range_msg);
 ros::Publisher right_pub_range( "/IR/right", &right_range_msg);
 
-void setupDistanceSensors(){
+void setupDistanceSensors(const char* frame_l, const char* frame_r){
   nh.advertise(left_pub_range);
   nh.advertise(right_pub_range);
 
   left_range_msg.radiation_type = sensor_msgs::Range::INFRARED;
-  left_range_msg.header.frame_id = "base_link"; //TODO: update to match urdf
+  left_range_msg.header.frame_id = frame_l; //TODO: update to match urdf
   left_range_msg.field_of_view = 0.01;
   left_range_msg.min_range = 0.03;
   left_range_msg.max_range = 0.8;
 
   right_range_msg.radiation_type = sensor_msgs::Range::INFRARED;
-  right_range_msg.header.frame_id = "base_link"; //TODO: update to match urdf
+  right_range_msg.header.frame_id = frame_r; //TODO: update to match urdf
   right_range_msg.field_of_view = 0.01;
   right_range_msg.min_range = 0.03;
   right_range_msg.max_range = 0.8;
