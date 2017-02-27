@@ -7,7 +7,7 @@ Robotic Systems Integration, Olin College of Engineering, SP2017
 
 ## Connectivity Diagram
 
-![connectivity](imaegs/graph.png)
+![connectivity](images/graph.png)
 
 ## Starting Up
 
