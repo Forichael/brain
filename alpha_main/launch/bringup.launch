@@ -3,6 +3,10 @@
 	<!-- rosserial; talk to arduino -->
 	<include file="$(find alpha_main)/launch/rosserial.launch"/>
 
+	<!-- transforms -->
+	<!-- TODO : remake URDF file -->
+	<!--<include file="$(find alpha_description)/launch/urdf.launch"/>-->
+
 	<!-- sensors -->
 	<include file="$(find alpha_sensors)/launch/sensors.launch"/>
 
@@ -10,5 +14,5 @@
 	<include file="$(find alpha_localization)/launch/localization.launch"/>
 
 	<!-- navigation -->
-	<!-- TODO : implement -->
+	<include file="$(find alpha_navigation)/launch/move_base.launch"/>
 </launch>

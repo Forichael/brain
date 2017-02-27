@@ -41,13 +41,6 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-
-  <run_depend>alpha_sensors</run_depend> <!-- sensors -->
-  <run_depend>alpha_description</run_depend> <!-- URDF tf -->
-  <run_depend>alpha_localization</run_depend> <!-- localization -->
-  <run_depend>alpha_navigation</run_depend> <!-- navigation -->
-
-
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

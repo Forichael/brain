@@ -1,5 +1,5 @@
 <launch>
-	<arg name="map_file" default="$(find alpha_localization)/maps/AC1.01.pgm"/>
+	<arg name="map_file" default="$(find alpha_localization)/maps/AC1.01.yaml"/>
 	<!-- Run the map server : global -->
 	<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)"/>
 
