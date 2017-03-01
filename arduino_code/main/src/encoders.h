@@ -13,7 +13,7 @@ extern ros::NodeHandle nh;
 Encoder rightEncoder(18, 20);
 Encoder leftEncoder(19, 21);
 
-const int ODOM_LOOP_TIME = 20; // ms
+const int ODOM_LOOP_TIME = 5; // ms
 
 std_msgs::Int16 right_encoder_msg;
 ros::Publisher right_encoder_pub("/rwheel", &right_encoder_msg);

@@ -25,8 +25,8 @@ void vel_cb(const geometry_msgs::Twist& msg){
 	float l = msg.linear.x;
 	float a = msg.angular.z;
 
-	motor_l.set_dst( Motor::STOP_SPEED + 200*l - 200*a);
-	motor_r.set_dst( Motor::STOP_SPEED + 200*l + 200*a);
+	motor_l.set_dst( Motor::STOP_SPEED + 400*l - 400*a);
+	motor_r.set_dst( Motor::STOP_SPEED + 400*l + 400*a);
 }
 
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", vel_cb);
