@@ -13,20 +13,28 @@ const int E_STOP_PIN = 7;
 // setup Parameters for the motor
 // without these defined, it won't compile!
 int Motor::STOP_SPEED = 1500;
-int Motor::MIN_SPEED = 1100;
-int Motor::MAX_SPEED = 1900;
+int Motor::MIN_SPEED = 1250;
+int Motor::MAX_SPEED = 1750;
 int Motor::DELTA_SPEED = 5;
 
 Motor motor_l;
 Motor motor_r;
 
+float v2p(float v){
+	return 1523 + 408*v - 220*v*v; // based on calibration data
+}
+
 void vel_cb(const geometry_msgs::Twist& msg){
 
-	float l = msg.linear.x;
-	float a = msg.angular.z;
+	float v = msg.linear.x;
+	float w = msg.angular.z;
+	const float l = 1.016; // base width
 
-	motor_l.set_dst( Motor::STOP_SPEED + 400*l - 400*a);
-	motor_r.set_dst( Motor::STOP_SPEED + 400*l + 400*a);
+	float v_l = v - (w*l)/2;
+	float v_r = v + (w*l)/2;
+
+	motor_l.set_dst(v2p(v_l));
+	motor_r.set_dst(v2p(v_r));
 }
 
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", vel_cb);
