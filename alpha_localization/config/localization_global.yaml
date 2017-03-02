@@ -22,7 +22,7 @@ odom0_queue_size: 10
 # IMU Again
 imu0: /android/imu
 imu0_config: [false, false, false, # no position data
-              true, true, true, # Orientation
+              false, false, false, # Orientation
               false, false, false, # no velocity data
               true, true, true, # Angular Velocity
               true, true, true] # Linear Acceleration #TODO : disable y-direction acceleration for diff-drive robot!
