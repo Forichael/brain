@@ -3,6 +3,21 @@ raytrace_range: 3.0
 holonomic_robot: false
 footprint: [[0.75, 0.508], [0.75, -0.508], [-0.75,0.508],[-0.75,-0.508]]
 
+map_type: costmap
+
+obstacle_layer:
+    observation_sources: scan
+    track_unknown_space: true
+    scan: {data_type: LaserScan, sensor_frame: /laser, topic: /scan, clearing: true, marking: true}
+
+inflation_layer:
+    enabled : True 
+    cost_scaling_factor: 5
+    inflation_radius: 0.5
+
+static_layer:
+    enabled: True
+
 #robot_radius: ir_of_robot # alternative to footprint
 #point_cloud_sensor: {sensor_frame: frame_name, data_type: PointCloud, topic: topic_name, marking: true, clearing: true}
 # TODO : add IR/Sonar/(Camera?)etc.
