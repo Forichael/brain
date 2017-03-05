@@ -1,18 +1,32 @@
 <launch>
-	<arg name="map_file" default="$(find alpha_navigation)/maps/AC1.03.yaml"/>
-	<!-- Run the map server : global -->
-	<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)"/>
 
-	<!--- Run AMCL -->
-	<!-- publishes tf; map to odom -->
-	<include file="$(find amcl)/examples/amcl_diff.launch" /> <!-- TODO : fill in better amcl params -->
+	<arg name="map_file" default="$(find alpha_navigation)/maps/AC1.01.yaml"/>
+	<arg name="slam" default="false"/>
+
+	<!-- gmapping slam, tf map to odom and also publishes map -->
+	<!--<group if="$(arg slam)">
+		<include file="$(find alpha_localization)/launch/mapping.launch"/>
+	</group>
+	-->
+
+	<group unless="$(arg slam)">
+		<!-- map server -->
+		<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)"/>
+		<!-- amcl localization, map to odom -->
+		<include file="$(find amcl)/examples/amcl_diff.launch" />
+		<!-- TODO : fill in better amcl params -->
+	</group>
+
 
 	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+		<param name="base_global_planner" value="navfn/NavfnROS"/>
+		<param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
+		<param name="controller_frequency" value="5"/>
 		<rosparam file="$(find alpha_navigation)/params/costmap_common_params.yaml" command="load" ns="global_costmap" />
 		<rosparam file="$(find alpha_navigation)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
 		<rosparam file="$(find alpha_navigation)/params/local_costmap_params.yaml" command="load" />
 		<rosparam file="$(find alpha_navigation)/params/global_costmap_params.yaml" command="load" />
-		<rosparam file="$(find alpha_navigation)/params/base_local_planner_params.yaml" command="load" />
+		<rosparam file="$(find alpha_navigation)/params/base_local_planner_params.yaml" command="load" ns="base_local_planner" />
 		<!-- <remap from="cmd_vel" to="cmd_vel"/> -->
 		<remap from="odom" to="odometry/filtered/local"/> <!-- local? -->
 	</node>

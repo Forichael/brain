@@ -2,6 +2,23 @@
 
 Navigation Stack for Alphabot using Move\_Base
 
+### To Run:
+
+
+If you're running SLAM (i.e. slam\_gmapping, etc.) to produce map and localization from map to odom :
+
+```bash
+roslaunch alpha_navigation move_base.launch slam:=true
+```
+
+Otherwise, if you're running map-server for a static map and localization from amcl:
+
+```bash
+roslaunch alpha_navigation move_base.launch #slam:=false
+```
+
+Slam is disabled by default.
+
 ### Error Msg:
 
 ```bash
