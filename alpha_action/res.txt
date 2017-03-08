@@ -1,0 +1,36 @@
+-------------------------------------------------------------
+Profile:                     default
+Extending:          [cached] /opt/ros/indigo
+Workspace:                   /home/jamiecho/catkin_ws
+-------------------------------------------------------------
+Source Space:       [exists] /home/jamiecho/catkin_ws/src
+Log Space:          [exists] /home/jamiecho/catkin_ws/logs
+Build Space:        [exists] /home/jamiecho/catkin_ws/build
+Devel Space:        [exists] /home/jamiecho/catkin_ws/devel
+Install Space:      [unused] /home/jamiecho/catkin_ws/install
+DESTDIR:            [unused] None
+-------------------------------------------------------------
+Devel Space Layout:          linked
+Install Space Layout:        None
+-------------------------------------------------------------
+Additional CMake Args:       None
+Additional Make Args:        None
+Additional catkin Make Args: None
+Internal Make Job Server:    True
+Cache Job Environments:      False
+-------------------------------------------------------------
+Whitelisted Packages:        None
+Blacklisted Packages:        None
+-------------------------------------------------------------
+Workspace configuration appears valid.
+-------------------------------------------------------------
+[build] Found '25' packages in 0.0 seconds.                                                             
+[build] Package table is up to date.                                                                    
+Starting >>> alpha_action                                                                               
+[build 0.2 s] [0/1 complete] [1/8 jobs] [0 queued] [alpha_action:loadenv - 0.1]                         [build 0.3 s] [0/1 complete] [1/8 jobs] [0 queued] [alpha_action:loadenv - 0.2]                         [build 0.4 s] [0/1 complete] [1/8 jobs] [0 queued] [alpha_action:loadenv - 0.3]                         [build 0.5 s] [0/1 complete] [8/8 jobs] [0 queued] [alpha_action:make (0%) - 0.4]                       [build 0.6 s] [0/1 complete] [2/8 jobs] [0 queued] [alpha_action:make (91%) - 0.5]                      [build 0.7 s] [0/1 complete] [2/8 jobs] [0 queued] [alpha_action:make (91%) - 0.6]                      Failed <<< alpha_action                [ 0.7 seconds ]                                                  
+[build] Summary: 0 of 1 packages succeeded.                                                             
+[build] Ignored: 24 packages were skipped or are blacklisted.                                           
+[build] Warnings: None.                                                                                 
+[build] Abandoned: No packages were abandoned.                                                          
+[build] Failed: 1 packages failed.                                                                      
+[build] Runtime: 1.7 seconds total.                                                                     

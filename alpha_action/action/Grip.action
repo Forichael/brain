@@ -1,0 +1,5 @@
+bool do_grip
+---
+bool gripped 
+---
+bool done

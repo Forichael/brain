@@ -1,4 +1,4 @@
-image: /home/odroid/catkin_ws/src/brain/alpha_navigation/maps/AC1.03.pgm
+image: /home/jamiecho/catkin_ws/src/sysrobo_alphabot/brain/alpha_navigation/maps/AC1.03.pgm
 resolution: 0.030000
 origin: [-99.990000, -99.990000, 0.000000]
 negate: 0
