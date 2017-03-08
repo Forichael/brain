@@ -52,7 +52,7 @@ int main(int argc, char** argv){
 	Gripper gripper;
 
 	gripper.open();
-	gripper.close();
+	//gripper.close();
 
 	return 0;
 }

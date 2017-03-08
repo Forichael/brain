@@ -2,6 +2,7 @@
 ros::NodeHandle nh;
 
 #include <geometry_msgs/Twist.h>
+#include <std_msgs/Bool.h>
 #include "encoders.h"
 #include "distanceSensors.h"
 #include "motor.h"
@@ -20,6 +21,12 @@ int Motor::DELTA_SPEED = 5;
 Motor motor_l;
 Motor motor_r;
 
+const int GRIPPER_PIN = 11;
+const int G_GRIP = 180;
+const int G_RELEASE = 0;
+Servo gripper;
+bool grip_status = G_RELEASE;
+
 float v2p(float v){
 	return 1523 + 408*v - 220*v*v; // based on calibration data
 }
@@ -37,7 +44,12 @@ void vel_cb(const geometry_msgs::Twist& msg){
 	motor_r.set_dst(v2p(v_r));
 }
 
+void grip_cb(const std_msgs::Bool& msg){
+	grip_status = msg.data;
+}
+
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", vel_cb);
+ros::Subscriber<std_msgs::Bool> g_sub("grip", grip_cb);
 
 bool readEstop(){
 	return digitalRead(E_STOP_PIN);
@@ -54,8 +66,14 @@ void setup()
 	motor_l.stop();
 	motor_r.stop();
 
+	//Gripper
+	pinMode(GRIPPER_PIN, OUTPUT);
+	gripper.attach(GRIPPER_PIN);
+
 	nh.initNode();
+
 	nh.subscribe(sub);
+	nh.subscribe(g_sub);
 
 	setupEncoders();
 	setupDistanceSensors("l_ir","r_ir");
@@ -70,6 +88,9 @@ void loop()
 	motor_l.write();
 	motor_r.write();
 
+	gripper.write(grip_status?G_GRIP:G_RELEASE);
+
 	loopEncoders(motor_r.cur);
 	loopDistanceSensors();
+	delay(5);
 }
