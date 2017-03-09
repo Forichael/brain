@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 import math
 import rospy
-from geometry_msgs.msg import PoseStamped, Pose, Quaternion, Point
+from geometry_msgs.msg import PoseStamped, Pose, Quaternion, Point, Twist, Vector3
 from std_msgs.msg import Header
 from smach import *
 from smach_ros import *
 
 from move_base_msgs.msg import MoveBaseAction
+from alpha_action.msg import GripAction, GripActionGoal
+
 
 class Delay(State):
     def __init__(self, delay_time=1):
@@ -46,29 +48,58 @@ class Navigate(SimpleActionState):
 
         return dest
 
+def Grip():
+    gripper_goal = GripActionGoal()
+    gripper_goal.goal.do_grip = True
+    return SimpleActionState('alpha_grip', GripAction, goal=gripper_goal)
 
-class Foo(State):
-    def __init__(self):
-        State.__init__(self, outcomes=['succeeded', 'aborted'])
-        self.counter = 0
+class ProximityNav(State):
+    def __init__(self, time=2, speed=0.2):
+        State.__init__(self, outcomes=['succeeded'])
+        self.timeout = rospy.Duration.from_sec(time)
+        self.speed = speed
+        self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state FOO')
-        if self.counter < 3:
-            self.counter += 1
+        startTime = rospy.Time.now()
+        rospy.loginfo('Beginning drive to can')
+        r = rospy.Rate(10)
+
+        # Drive the robot
+        while rospy.Time.now() - startTime < self.timeout and not rospy.is_shutdown():
+            self.pub.publish(Twist(linear=Vector3(x=self.speed)))
+            r.sleep()
+
+        # Stop the robot
+        self.pub.publish(Twist())
+        rospy.loginfo('Finished drive')
+        return 'succeeded'
+
+
+class Foo(State):
+    """
+    Foo runs several times, ending with returning "aborted"
+    """
+    def __init__(self, loops=3):
+        State.__init__(self, outcomes=['succeeded', 'aborted'])
+        self.counter = loops
+
+    def execute(self, userdata):
+        if self.counter > 0:
+            self.counter -= 1
             return 'succeeded'
         else:
             return 'aborted'
 
 
 # define state Bar
-class Bar(State):
-    def __init__(self):
-        State.__init__(self, outcomes=['succeeded'])
-
-    def execute(self, userdata):
-        rospy.loginfo('Executing state BAR')
-        return 'succeeded'
+# class Bar(State):
+#     def __init__(self):
+#         State.__init__(self, outcomes=['succeeded'])
+#
+#     def execute(self, userdata):
+#         rospy.loginfo('Executing state BAR')
+#         return 'succeeded'
 
 
 # main
@@ -82,23 +113,30 @@ def main():
     # Open the container
     with sm:
         # Add states to the container
-        StateMachine.add('FOO', Foo(),
-                         transitions={'succeeded': 'BAR',
-                                      'aborted': 'succeeded'})
-        StateMachine.add('BAR', Bar(),
-                         transitions={'succeeded': 'NAV1'})
+        # StateMachine.add('FOO', Foo(),
+        #                  transitions={'succeeded': 'NAV1',
+        #                               'aborted': 'succeeded'})
 
         StateMachine.add('NAV1', Navigate(),
-                         transitions={'succeeded': 'FOO',
+                         transitions={'succeeded': 'NAV2',
                                       'preempted': 'aborted'},
                          remapping={'destination': 'can_position'})
 
+        StateMachine.add('NAV2', ProximityNav(),
+                         transitions={'succeeded': 'GRIP'})
+
+        StateMachine.add('GRIP', Grip(),
+                         transitions={'succeeded': 'DELAY2',
+                                      'preempted': 'aborted'})
+
         StateMachine.add('DELAY2', Delay(2),
-                         transitions={'succeeded': 'FOO'})
+                         transitions={'succeeded': 'succeeded'})
+
+        sm.set_initial_state(['NAV1'])
 
     # Execute the machine
     data = UserData()
-    data.can_position = (1, 2, 3)
+    data.can_position = (1, 0, 0)
     outcome = sm.execute(data)
 
 
