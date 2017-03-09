@@ -7,7 +7,7 @@ from smach import *
 from smach_ros import *
 
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
-from alpha_action.msg import GripAction, GripActionGoal
+from alpha_action.msg import GripAction, GripGoal
 
 
 class Delay(State):
@@ -51,13 +51,13 @@ class Navigate(SimpleActionState):
 
 
 def Grip():
-    gripper_goal = GripActionGoal()
-    gripper_goal.goal.do_grip = True
+    gripper_goal = GripGoal()
+    gripper_goal.do_grip = True
     return SimpleActionState('alpha_grip', GripAction, goal=gripper_goal)
 
 
 class ProximityNav(State):
-    def __init__(self, time=2, speed=0.2):
+    def __init__(self, time=6, speed=0.2):
         State.__init__(self, outcomes=['succeeded'])
         self.timeout = rospy.Duration.from_sec(time)
         self.speed = speed
