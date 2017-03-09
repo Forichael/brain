@@ -44,7 +44,7 @@ class Navigate(SimpleActionState):
         angle = Quaternion(0, 0, math.sin(theta / 2), math.cos(theta / 2))
 
         dest = PoseStamped(
-            header=Header(frame_id='map'),
+            header=Header(frame_id='base_link'),
             pose=Pose(position=Point(x=x, y=y, z=0), orientation=angle))
 
         return MoveBaseGoal(target_pose=dest)
