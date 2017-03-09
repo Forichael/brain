@@ -76,6 +76,8 @@ KNOWN_WIDTH = 2.89 # TODO : fix this bullshit parameter
 # cv2.namedWindow('camera view')
 
 tgt_pub = None
+pub = rospy.Publisher('tgt_can_bottom', Point, queue_size=10)
+
 
 def img_cb(data):
     bridge = CvBridge()
@@ -92,7 +94,15 @@ def img_cb(data):
         box = np.int0(cv2.cv.BoxPoints(minRect))
         cv2.drawContours(frame, [box], -1, (0, 255, 0), 2)
 
-        (x,y),(w,h) = minRect[0], minRect[1]
+        ptCen, dim,_  = minRect
+        x, y = ptCen
+        w, h = dim
+        cv2.circle(frame, (int(x), int(y+h/2)), 10, (255, 0, 0), 3)
+
+        ptCenBot = [x, y+h/2]
+        #Publish the bottom centerpoint to ROS
+        pub.publish(Point(x=ptCenBot[0], y=ptCenBot[1]))
+
 
         # 640x480
         dx = x - 320
@@ -120,11 +130,15 @@ def img_cb(data):
         #        'can',
         #        'camera'
         #        )
+        
+    else:
+        ptCen = [0,0]
+        ptCenBot = [0,0]
 
         #Publish the bottom centerpoint to ROS
 #        cv2.imshow('frame', frame) 
 #        cv2.imshow('can', pinkPixels) 
-        cv2.waitKey(10)
+#        cv2.waitKey(10)
 ##Uncomment to see, silenced for ROS:
 
 def main():
