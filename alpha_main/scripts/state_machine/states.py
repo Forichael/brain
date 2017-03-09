@@ -1,11 +1,51 @@
 #!/usr/bin/env python
-
+import math
 import rospy
+from geometry_msgs.msg import PoseStamped, Pose, Quaternion, Point
+from std_msgs.msg import Header
 from smach import *
 from smach_ros import *
 
 
-# define state Foo
+class Delay(State):
+    def __init__(self, delay_time=1):
+        State.__init__(self, outcomes=['succeeded'])
+        self.delay_time = delay_time
+
+    def execute(self, userdata):
+        rospy.loginfo('Beginning {}s delay'.format(self.delay_time))
+
+        rospy.sleep(self.delay_time)
+
+        return 'succeeded'
+
+
+class Navigate(State):
+    def __init__(self, timeout=-1):
+        State.__init__(self,
+                       outcomes=['succeeded', 'aborted'],
+                       input_keys=['destination'])
+
+        self.pub = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
+
+    def execute(self, userdata):
+        rospy.loginfo('Beginning navigation state')
+
+        theta = userdata.destination[2]
+        x, y = userdata.destination[:2]
+        angle = Quaternion(0, 0, math.sin(theta / 2), math.cos(theta / 2))
+
+        dest = PoseStamped(
+            header=Header(frame_id='map'),
+            pose=Pose(position=Point(x=x, y=y, z=0), orientation=angle))
+
+        self.pub.publish(dest)
+
+        rospy.sleep(3)
+
+        return 'succeeded'
+
+
 class Foo(State):
     def __init__(self):
         State.__init__(self, outcomes=['succeeded', 'aborted'])
@@ -32,10 +72,11 @@ class Bar(State):
 
 # main
 def main():
-    rospy.init_node('smach_example_state_machine')
+    rospy.init_node('alphabot_state_machine')
 
     # Create a SMACH state machine
-    sm = StateMachine(outcomes=['succeeded', 'aborted'])
+    sm = StateMachine(outcomes=['succeeded', 'aborted'],
+                      input_keys=['can_position'])
 
     # Open the container
     with sm:
@@ -44,11 +85,19 @@ def main():
                          transitions={'succeeded': 'BAR',
                                       'aborted': 'succeeded'})
         StateMachine.add('BAR', Bar(),
+                         transitions={'succeeded': 'NAV1'})
+
+        StateMachine.add('NAV1', Navigate(),
+                         transitions={'succeeded': 'FOO'},
+                         remapping={'destination': 'can_position'})
+
+        StateMachine.add('DELAY2', Delay(2),
                          transitions={'succeeded': 'FOO'})
 
-
-    # Execute SMACH plan
-    outcome = sm.execute()
+    # Execute the machine
+    data = UserData()
+    data.can_position = (1, 2, 3)
+    outcome = sm.execute(data)
 
 
 if __name__ == '__main__':
