@@ -6,7 +6,7 @@ from std_msgs.msg import Header
 from smach import *
 from smach_ros import *
 
-from move_base_msgs.msg import MoveBaseAction
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from alpha_action.msg import GripAction, GripActionGoal
 
 
@@ -28,6 +28,7 @@ class Navigate(SimpleActionState):
     Navigate is a state that calls the move_base action
     with an argument "destination" passed as a tuple (x, y, theta)
     """
+
     def __init__(self):
         SimpleActionState.__init__(self,
                                    'move_base',
@@ -46,12 +47,14 @@ class Navigate(SimpleActionState):
             header=Header(frame_id='map'),
             pose=Pose(position=Point(x=x, y=y, z=0), orientation=angle))
 
-        return dest
+        return MoveBaseGoal(target_pose=dest)
+
 
 def Grip():
     gripper_goal = GripActionGoal()
     gripper_goal.goal.do_grip = True
     return SimpleActionState('alpha_grip', GripAction, goal=gripper_goal)
+
 
 class ProximityNav(State):
     def __init__(self, time=2, speed=0.2):
@@ -80,6 +83,7 @@ class Foo(State):
     """
     Foo runs several times, ending with returning "aborted"
     """
+
     def __init__(self, loops=3):
         State.__init__(self, outcomes=['succeeded', 'aborted'])
         self.counter = loops
