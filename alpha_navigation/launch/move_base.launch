@@ -4,10 +4,9 @@
 	<arg name="slam" default="false"/>
 
 	<!-- gmapping slam, tf map to odom and also publishes map -->
-	<!--<group if="$(arg slam)">
+	<group if="$(arg slam)">
 		<include file="$(find alpha_localization)/launch/mapping.launch"/>
 	</group>
-	-->
 
 	<group unless="$(arg slam)">
 		<!-- map server -->
@@ -26,7 +25,7 @@
 		<rosparam file="$(find alpha_navigation)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
 		<rosparam file="$(find alpha_navigation)/params/local_costmap_params.yaml" command="load" />
 		<rosparam file="$(find alpha_navigation)/params/global_costmap_params.yaml" command="load" />
-		<rosparam file="$(find alpha_navigation)/params/base_local_planner_params.yaml" command="load" ns="base_local_planner" />
+		<rosparam file="$(find alpha_navigation)/params/base_local_planner_params.yaml" command="load"/>
 		<!-- <remap from="cmd_vel" to="cmd_vel"/> -->
 		<remap from="odom" to="odometry/filtered/local"/> <!-- local? -->
 	</node>

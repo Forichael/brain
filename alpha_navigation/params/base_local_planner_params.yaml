@@ -2,10 +2,14 @@ TrajectoryPlannerROS:
     holonomic_robot: false # important!
     # setup limits
     max_vel_x : 1.0
-    min_vel_x : 0.3
-    max_vel_theta : 1.0
+    min_vel_x : 0.1
 
+    min_vel_y : 0.0
+    max_vel_y : 0.0
+
+    max_vel_theta : 1.0
     max_in_place_vel_theta : 0.3
 
     acc_lim_x : 2.5
     acc_lim_theta : 3.2
+    acc_lim_y : 0.0
