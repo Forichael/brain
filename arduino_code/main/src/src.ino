@@ -34,8 +34,8 @@ double l_out, l_set;
 double r_out, r_set;
 
 //l_vel and r_vel are computed from encoders.h, in loopEncoders()
-PID l_pid(&l_vel, &l_out, &l_set, 1.5, 0.05, 0.001,DIRECT); //TODO : tune k_p, k_i, k_d
-PID r_pid(&r_vel, &r_out, &r_set, 1.5, 0.05, 0.001,DIRECT);
+PID l_pid(&l_vel, &l_out, &l_set, 1.5, 0.05, 0.003,DIRECT); //TODO : tune k_p, k_i, k_d
+PID r_pid(&r_vel, &r_out, &r_set, 1.5, 0.05, 0.003,DIRECT);
 
 float v2p(float v){
 	return 1523 + 408*v - 220*v*v; // adjust cmd_vel based on calibration data

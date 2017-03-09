@@ -15,4 +15,7 @@
 
 	<!-- navigation -->
 	<!--<include file="$(find alpha_navigation)/launch/move_base.launch"/>-->
+
+	<!-- action -->
+	<include file="$(find alpha_action)/launch/action.launch"/>
 </launch>

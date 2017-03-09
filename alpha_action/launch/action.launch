@@ -1,0 +1,3 @@
+<launch>
+	<node pkg="alpha_action" type="alpha_gripper_server" name="alpha_gripper_server"/>
+</launch>
