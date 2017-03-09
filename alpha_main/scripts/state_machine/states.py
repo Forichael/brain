@@ -50,9 +50,9 @@ class Navigate(SimpleActionState):
         return MoveBaseGoal(target_pose=dest)
 
 
-def Grip():
+def Grip(close=True):
     gripper_goal = GripGoal()
-    gripper_goal.do_grip = True
+    gripper_goal.do_grip = close
     return SimpleActionState('alpha_grip', GripAction, goal=gripper_goal)
 
 
@@ -91,9 +91,32 @@ class ProximityNav(State):
         return 'succeeded'
 
 
-class Foo(State):
+class Backup(State):
+    def __init__(self, time=6, speed=-0.2):
+        State.__init__(self, outcomes=['succeeded'])
+        self.timeout = rospy.Duration.from_sec(time)
+        self.speed = speed
+        self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+
+    def execute(self, userdata):
+        start_time = rospy.Time.now()
+        rospy.loginfo('Beginning backup')
+        r = rospy.Rate(10)
+
+        # Drive the robot
+        while rospy.Time.now() - start_time < self.timeout and not rospy.is_shutdown():
+            self.pub.publish(Twist(linear=Vector3(x=self.speed)))
+            r.sleep()
+
+        # Stop the robot
+        self.pub.publish(Twist())
+        rospy.loginfo('Finished drive')
+        return 'succeeded'
+
+
+class Loop(State):
     """
-    Foo runs several times, ending with returning "aborted"
+    Loop runs several times, ending with returning "aborted"
     """
 
     def __init__(self, loops=3):
@@ -129,26 +152,45 @@ def main():
     # Open the container
     with sm:
         # Add states to the container
-        # StateMachine.add('FOO', Foo(),
-        #                  transitions={'succeeded': 'NAV1',
-        #                               'aborted': 'succeeded'})
 
-        StateMachine.add('NAV1', Navigate(),
-                         transitions={'succeeded': 'NAV2',
-                                      'preempted': 'aborted'},
-                         remapping={'destination': 'can_position'})
-
-        StateMachine.add('NAV2', ProximityNav(),
-                         transitions={'succeeded': 'DELAY'})
-
-        StateMachine.add('GRIP', Grip(),
-                         transitions={'succeeded': 'succeeded',
+        StateMachine.add('RELEASE1', Grip(False),
+                         transitions={'succeeded': 'LOOP',
                                       'preempted': 'aborted'})
 
-        StateMachine.add('DELAY', Delay(2),
+        StateMachine.add('LOOP', Loop(),
+                         transitions={'succeeded': 'NAV2',
+                                      'aborted': 'succeeded'})
+
+        # StateMachine.add('NAV1', Navigate(),
+        #                  transitions={'succeeded': 'NAV2',
+        #                               'preempted': 'aborted'},
+        #                  remapping={'destination': 'can_position'})
+
+        StateMachine.add('NAV2', ProximityNav(),
+                         transitions={'succeeded': 'DELAY1'})
+
+        StateMachine.add('DELAY1', Delay(2),
                          transitions={'succeeded': 'GRIP'})
 
-        sm.set_initial_state(['NAV2'])
+        StateMachine.add('GRIP', Grip(True),
+                         transitions={'succeeded': 'DELAY2',
+                                      'preempted': 'aborted'})
+
+        StateMachine.add('DELAY2', Delay(2),
+                         transitions={'succeeded': 'BACKUP1'})
+
+        StateMachine.add('BACKUP1', Backup(time=3),
+                         transitions={'succeeded': 'RELEASE2'})
+
+        StateMachine.add('RELEASE2', Grip(False),
+                         transitions={'succeeded': 'BACKUP2',
+                                      'preempted': 'aborted'})
+
+        StateMachine.add('BACKUP2', Backup(time=5),
+                         transitions={'succeeded': 'LOOP'})
+
+
+        sm.set_initial_state(['RELEASE1'])
 
     # Execute the machine
     data = UserData()
