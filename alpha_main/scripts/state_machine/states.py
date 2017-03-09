@@ -166,7 +166,7 @@ def main():
         #                               'preempted': 'aborted'},
         #                  remapping={'destination': 'can_position'})
 
-        StateMachine.add('NAV2', ProximityNav(),
+        StateMachine.add('NAV2', ProximityNav(speed=0.3),
                          transitions={'succeeded': 'DELAY1'})
 
         StateMachine.add('DELAY1', Delay(2),
