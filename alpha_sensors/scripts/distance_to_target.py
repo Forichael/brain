@@ -33,8 +33,8 @@ def find_marker(image):
     imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     imageHSV = cv2.GaussianBlur(imageHSV, (9, 9), 0)
     #declare bounds for target pixel range
-    lower_pink = np.array([0, 100, 10])
-    higher_pink = np.array([20, 255, 255])
+    lower_pink = np.array([165, 100, 10])
+    higher_pink = np.array([179, 255, 255])
     #show pink pixels in range
     pinkPixels = cv2.inRange(imageHSV, lower_pink, higher_pink)
 
