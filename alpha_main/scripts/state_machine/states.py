@@ -57,20 +57,32 @@ def Grip():
 
 
 class ProximityNav(State):
-    def __init__(self, time=6, speed=0.2):
+    def __init__(self, time=6, speed=0.2, kp=1.0/200):
         State.__init__(self, outcomes=['succeeded'])
         self.timeout = rospy.Duration.from_sec(time)
         self.speed = speed
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.sub = rospy.Subscriber('/tgt_can_bottom', Point, self.onDetect)
+        self.angleError = 0
+        self.kp = kp
+
+    def onDetect(self, msg):
+        """
+        :type msg: Point
+        """
+
+        # Positive angle error indicates robot should turn left in approximate radians
+        self.angleError = (320 - msg.x)
 
     def execute(self, userdata):
-        startTime = rospy.Time.now()
+        start_time = rospy.Time.now()
         rospy.loginfo('Beginning drive to can')
         r = rospy.Rate(10)
 
         # Drive the robot
-        while rospy.Time.now() - startTime < self.timeout and not rospy.is_shutdown():
-            self.pub.publish(Twist(linear=Vector3(x=self.speed)))
+        while rospy.Time.now() - start_time < self.timeout and not rospy.is_shutdown():
+            turnPower = self.kp * self.angleError
+            self.pub.publish(Twist(linear=Vector3(x=self.speed), angular=Vector3(z=turnPower)))
             r.sleep()
 
         # Stop the robot
@@ -127,16 +139,16 @@ def main():
                          remapping={'destination': 'can_position'})
 
         StateMachine.add('NAV2', ProximityNav(),
-                         transitions={'succeeded': 'GRIP'})
+                         transitions={'succeeded': 'DELAY'})
 
         StateMachine.add('GRIP', Grip(),
-                         transitions={'succeeded': 'DELAY2',
+                         transitions={'succeeded': 'succeeded',
                                       'preempted': 'aborted'})
 
-        StateMachine.add('DELAY2', Delay(2),
-                         transitions={'succeeded': 'succeeded'})
+        StateMachine.add('DELAY', Delay(2),
+                         transitions={'succeeded': 'GRIP'})
 
-        sm.set_initial_state(['NAV1'])
+        sm.set_initial_state(['NAV2'])
 
     # Execute the machine
     data = UserData()
