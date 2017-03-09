@@ -21,7 +21,7 @@ import roslib
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, PoseStamped
 
 
 def distance_to_camera(knownHeight, focalLength, perHeight):
@@ -33,8 +33,8 @@ def find_marker(image):
     imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     imageHSV = cv2.GaussianBlur(imageHSV, (9, 9), 0)
     #declare bounds for target pixel range
-    lower_pink = np.array([165, 100, 10])
-    higher_pink = np.array([179, 255, 255])
+    lower_pink = np.array([0, 100, 10])
+    higher_pink = np.array([20, 255, 255])
     #show pink pixels in range
     pinkPixels = cv2.inRange(imageHSV, lower_pink, higher_pink)
 
@@ -93,17 +93,30 @@ def img_cb(data):
 
         # 640x480
         dx = x - 320
+        dy = y - 240
         #d = 320 / np.tan(fov/2) = focalLength
-        theta = np.arctan(dx/focalLength) # heading
+
+        theta = np.arctan(dx/focalLength) # yaw-ish
+        phi = np.arctan(dy/focalLength) # pitch
+
         distance = distance_to_camera(KNOWN_WIDTH, focalLength, w) # distance
 
-        br = tf.TransformBroadcaster()
-        br.sendTransform((distance,-distance*np.tan(theta),0), #don't really care abt "up" direction;  x is forwards direction. sign of y is flipped because in ros y is pointed left
-                tf.transformations.quaternion_from_euler(0,0,0), #don't care
-                rospy.Time.now(),
-                'can',
-                'camera'
-                )
+        tgt_msg = PoseStamped()
+        tgt_msg.header.frame_id = 'camera'
+        tgt_msg.header.stamp = rospy.Time.now()
+
+        tgt_msg.pose.position.x = distance
+        tgt_msg.pose.position.y = -distance * np.tan(theta) # because y is pointed left in ros, flipped
+        tgt_msg.pose.position.z = -distance * np.tan(phi) # because camera coordinates, y is flipped
+
+        tgt_pub.publish(tgt_msg)
+        #br = tf.TransformBroadcaster()
+        #br.sendTransform((distance,-distance*np.tan(theta),0), #don't really care abt "up" direction;  x is forwards direction. sign of y is flipped because in ros y is pointed left
+        #        tf.transformations.quaternion_from_euler(0,0,0), #don't care
+        #        rospy.Time.now(),
+        #        'can',
+        #        'camera'
+        #        )
 
         #Publish the bottom centerpoint to ROS
         cv2.imshow('frame', frame) 
@@ -114,8 +127,9 @@ def img_cb(data):
 def main():
     global tgt_pub
     #initialize ROS channels
-    rospy.init_node('can_finder', anonymous=True)
-    img_sub = rospy.Subscriber('alpha/image_raw', Image, img_cb)
+    rospy.init_node('can_finder')
+    img_sub = rospy.Subscriber('image_raw', Image, img_cb)
+    tgt_pub = rospy.Publisher('can_pose', PoseStamped, queue_size=10)
 
     #rate = rospy.Rate(20)
     rospy.spin()
