@@ -33,7 +33,7 @@ def find_marker(image):
     imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     imageHSV = cv2.GaussianBlur(imageHSV, (9, 9), 0)
     #declare bounds for target pixel range
-    lower_pink = np.array([165, 100, 10])
+    lower_pink = np.array([165, 30, 10])
     higher_pink = np.array([179, 255, 255])
     #show pink pixels in range
     pinkPixels = cv2.inRange(imageHSV, lower_pink, higher_pink)
@@ -43,11 +43,14 @@ def find_marker(image):
         #cv2.contourArea unit: pixel
         pinkContour = max(cnts, key = cv2.contourArea) 	
         if (cv2.contourArea(pinkContour) > 200):
+            print "Can found"
             return cv2.minAreaRect(pinkContour), pinkPixels
         else:
+            print "No can found (too small)"
             return 0,0
     except:
         #make a filterable exception
+        print "No can found at all"
         return 0,0
 
 def calibrate_camera(knownDistance, knownHeight, knownImage): #maybe dont have this in
@@ -119,8 +122,8 @@ def img_cb(data):
         #        )
 
         #Publish the bottom centerpoint to ROS
-        cv2.imshow('frame', frame) 
-        cv2.imshow('can', pinkPixels) 
+#        cv2.imshow('frame', frame) 
+#        cv2.imshow('can', pinkPixels) 
         cv2.waitKey(10)
 ##Uncomment to see, silenced for ROS:
 
@@ -128,7 +131,7 @@ def main():
     global tgt_pub
     #initialize ROS channels
     rospy.init_node('can_finder')
-    img_sub = rospy.Subscriber('image_raw', Image, img_cb)
+    img_sub = rospy.Subscriber('/alpha/image_raw', Image, img_cb)
     tgt_pub = rospy.Publisher('can_pose', PoseStamped, queue_size=10)
 
     #rate = rospy.Rate(20)

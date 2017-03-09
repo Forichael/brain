@@ -136,7 +136,7 @@ def main():
         StateMachine.add('DELAY2', Delay(2),
                          transitions={'succeeded': 'succeeded'})
 
-        sm.set_initial_state(['GRIP'])
+        sm.set_initial_state(['NAV1'])
 
     # Execute the machine
     data = UserData()
