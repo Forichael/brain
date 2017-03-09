@@ -6,7 +6,9 @@ ros::NodeHandle nh;
 #include "encoders.h"
 #include "distanceSensors.h"
 #include "motor.h"
+#include "PID_v1.h"
 
+#define WHEEL_BASE 1.016
 const int MOTOR_L_PIN = 2;
 const int MOTOR_R_PIN = 3;
 const int E_STOP_PIN = 7;
@@ -24,24 +26,34 @@ Motor motor_r;
 const int GRIPPER_PIN = 11;
 const int G_GRIP = 180;
 const int G_RELEASE = 0;
+
 Servo gripper;
 bool grip_status = G_RELEASE;
 
+double l_out, l_set;
+double r_out, r_set;
+
+//l_vel and r_vel are computed from encoders.h, in loopEncoders()
+PID l_pid(&l_vel, &l_out, &l_set, 2, 5, 1,DIRECT); //TODO : tune k_p, k_i, k_d
+PID r_pid(&r_vel, &r_out, &r_set, 2, 5, 1,DIRECT);
+
 float v2p(float v){
-	return 1523 + 408*v - 220*v*v; // based on calibration data
+	return 1523 + 408*v - 220*v*v; // adjust cmd_vel based on calibration data
 }
 
 void vel_cb(const geometry_msgs::Twist& msg){
-
 	float v = msg.linear.x;
 	float w = msg.angular.z;
-	const float l = 1.016; // base width
 
-	float v_l = v - (w*l)/2;
-	float v_r = v + (w*l)/2;
+	l_set = v - (w*WHEEL_BASE)/2;
+	r_set = v + (w*WHEEL_BASE)/2;
 
-	motor_l.set_dst(v2p(v_l));
-	motor_r.set_dst(v2p(v_r));
+	// l_in = computed v_l
+
+	// setpoints based on cmd_vel
+	l_set = v_l; 
+	r_set = v_r;
+
 }
 
 void grip_cb(const std_msgs::Bool& msg){
@@ -83,6 +95,14 @@ void loop()
 {
 	nh.spinOnce(); // vel_cb gets called here
 
+	// run PID
+	l_pid.compute();
+	r_pid.compute();
+
+	// run motors
+	motor_l.set_dst(v2p(l_out));
+	motor_r.set_dst(v2p(r_out));
+
 	motor_l.ramp();
 	motor_r.ramp();
 	motor_l.write();
@@ -90,7 +110,6 @@ void loop()
 
 	gripper.write(grip_status?G_GRIP:G_RELEASE);
 
-	loopEncoders(motor_r.cur);
+	loopEncoders();
 	loopDistanceSensors();
-	delay(5);
 }
