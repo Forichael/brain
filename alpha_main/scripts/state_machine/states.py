@@ -6,6 +6,7 @@ from std_msgs.msg import Header
 from smach import *
 from smach_ros import *
 
+from move_base_msgs.msg import MoveBaseAction
 
 class Delay(State):
     def __init__(self, delay_time=1):
@@ -20,16 +21,20 @@ class Delay(State):
         return 'succeeded'
 
 
-class Navigate(State):
-    def __init__(self, timeout=-1):
-        State.__init__(self,
-                       outcomes=['succeeded', 'aborted'],
-                       input_keys=['destination'])
+class Navigate(SimpleActionState):
+    """
+    Navigate is a state that calls the move_base action
+    with an argument "destination" passed as a tuple (x, y, theta)
+    """
+    def __init__(self):
+        SimpleActionState.__init__(self,
+                                   'move_base',
+                                   MoveBaseAction,
+                                   goal_cb=self.goal_cb,
+                                   input_keys=['destination'])
 
-        self.pub = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
-
-    def execute(self, userdata):
-        rospy.loginfo('Beginning navigation state')
+    def goal_cb(self, userdata, goal):
+        rospy.loginfo('Calculating navigation goal')
 
         theta = userdata.destination[2]
         x, y = userdata.destination[:2]
@@ -39,11 +44,7 @@ class Navigate(State):
             header=Header(frame_id='map'),
             pose=Pose(position=Point(x=x, y=y, z=0), orientation=angle))
 
-        self.pub.publish(dest)
-
-        rospy.sleep(3)
-
-        return 'succeeded'
+        return dest
 
 
 class Foo(State):
@@ -88,7 +89,8 @@ def main():
                          transitions={'succeeded': 'NAV1'})
 
         StateMachine.add('NAV1', Navigate(),
-                         transitions={'succeeded': 'FOO'},
+                         transitions={'succeeded': 'FOO',
+                                      'preempted': 'aborted'},
                          remapping={'destination': 'can_position'})
 
         StateMachine.add('DELAY2', Delay(2),
