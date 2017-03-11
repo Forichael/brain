@@ -33,12 +33,16 @@ bool grip_status = G_RELEASE;
 double l_out, l_set;
 double r_out, r_set;
 
+#define K_P 1.0
+#define K_I 0.05
+#define K_D 0.0
+
 //l_vel and r_vel are computed from encoders.h, in loopEncoders()
-PID l_pid(&l_vel, &l_out, &l_set, 1.5, 0.05, 0.003,DIRECT); //TODO : tune k_p, k_i, k_d
-PID r_pid(&r_vel, &r_out, &r_set, 1.5, 0.05, 0.003,DIRECT);
+PID l_pid(&l_vel, &l_out, &l_set, K_P, K_I, K_D, DIRECT); //TODO : tune k_p, k_i, k_d
+PID r_pid(&r_vel, &r_out, &r_set, K_P, K_I, K_D, DIRECT);
 
 float v2p(float v){
-	return 1523 + 408*v - 220*v*v; // adjust cmd_vel based on calibration data
+	return Motor::STOP_SPEED + 408 * v; // made linear
 }
 
 void vel_cb(const geometry_msgs::Twist& msg){
@@ -46,8 +50,8 @@ void vel_cb(const geometry_msgs::Twist& msg){
 	float w = msg.angular.z;
 
 	// setpoints based on cmd_vel
-	l_set = v - (w*WHEEL_BASE)/2;
-	r_set = v + (w*WHEEL_BASE)/2;
+	l_set = v - (w*WHEEL_BASE);
+	r_set = v + (w*WHEEL_BASE);
 }
 
 void grip_cb(const std_msgs::Bool& msg){
