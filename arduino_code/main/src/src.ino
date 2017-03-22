@@ -41,6 +41,14 @@ double r_out, r_set;
 PID l_pid(&l_vel, &l_out, &l_set, K_P, K_I, K_D, DIRECT); //TODO : tune k_p, k_i, k_d
 PID r_pid(&r_vel, &r_out, &r_set, K_P, K_I, K_D, DIRECT);
 
+void resetPIDs(){
+	l_pid.SetMode(MANUAL);
+	r_pid.SetMode(MANUAL);
+	l_out = r_out = 0;
+	l_pid.SetMode(AUTOMATIC);
+	r_pid.SetMode(AUTOMATIC);
+}
+
 float v2p(float v){
 	return Motor::STOP_SPEED + 408*v - 220*v*v;
 	//return Motor::STOP_SPEED + 408 * v; // made linear
@@ -53,6 +61,10 @@ void vel_cb(const geometry_msgs::Twist& msg){
 	// setpoints based on cmd_vel
 	l_set = v - (w*WHEEL_BASE);
 	r_set = v + (w*WHEEL_BASE);
+
+	if (v == 0 && w == 0){
+		resetPIDs();
+	}
 }
 
 void grip_cb(const std_msgs::Bool& msg){
