@@ -15,9 +15,9 @@ const int E_STOP_PIN = 7;
 
 // setup Parameters for the motor
 // without these defined, it won't compile!
-int Motor::STOP_SPEED = 1500;
-int Motor::MIN_SPEED = 1250;
-int Motor::MAX_SPEED = 1750;
+int Motor::STOP_SPEED = 1520;
+int Motor::MIN_SPEED = STOP_SPEED - 250;
+int Motor::MAX_SPEED = STOP_SPEED + 250;
 int Motor::DELTA_SPEED = 5;
 
 Motor motor_l;
@@ -33,8 +33,8 @@ bool grip_status = G_RELEASE;
 double l_out, l_set;
 double r_out, r_set;
 
-#define K_P 1.0
-#define K_I 0.05
+#define K_P 0.8775
+#define K_I 0.173
 #define K_D 0.0
 
 //l_vel and r_vel are computed from encoders.h, in loopEncoders()
@@ -42,7 +42,8 @@ PID l_pid(&l_vel, &l_out, &l_set, K_P, K_I, K_D, DIRECT); //TODO : tune k_p, k_i
 PID r_pid(&r_vel, &r_out, &r_set, K_P, K_I, K_D, DIRECT);
 
 float v2p(float v){
-	return Motor::STOP_SPEED + 408 * v; // made linear
+	return Motor::STOP_SPEED + 408*v - 220*v*v;
+	//return Motor::STOP_SPEED + 408 * v; // made linear
 }
 
 void vel_cb(const geometry_msgs::Twist& msg){
