@@ -33,7 +33,8 @@ bool grip_status = G_RELEASE;
 double l_out, l_set;
 double r_out, r_set;
 
-#define K_P 0.8775
+// #define K_P 0.8775
+#define K_P 0.6
 #define K_I 0.173
 #define K_D 0.0
 
