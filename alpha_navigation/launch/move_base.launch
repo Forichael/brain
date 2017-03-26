@@ -1,11 +1,11 @@
 <launch>
 
-	<arg name="map_file" default="$(find alpha_navigation)/maps/AC1.01.yaml"/>
+	<arg name="map_file" default="$(find alpha_navigation)/maps/AC1.04.yaml"/>
 	<arg name="slam" default="false"/>
 
 	<!-- gmapping slam, tf map to odom and also publishes map -->
 	<group if="$(arg slam)">
-		<include file="$(find alpha_localization)/launch/mapping.launch"/>
+		<!--<include file="$(find alpha_localization)/launch/mapping.launch"/>-->
 	</group>
 
 	<group unless="$(arg slam)">

@@ -15,5 +15,5 @@ TrajectoryPlannerROS:
     acc_lim_y : 0.0
 
     #tolerances
-    yaw_goal_tolernace: 0.26
-    xy_goal_tolerance: 0.25 
+    yaw_goal_tolernace: 0.26 #15 degrees
+    xy_goal_tolerance: 0.25  #15 cm
