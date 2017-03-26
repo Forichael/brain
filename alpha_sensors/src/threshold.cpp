@@ -8,6 +8,8 @@
 #include <opencv2/highgui/highgui.hpp>
 
 int lh=4, hh=7; // reasonable default values
+int ls=4, hs=7; // reasonable default values
+int lv=4, hv=7; // reasonable default values
 
 // kernel
 cv::Mat ker = cv::getStructuringElement(cv::MORPH_ERODE, cv::Size(3,3), cv::Point(1,1));
@@ -48,7 +50,9 @@ class ImageConverter
 		cv::Mat thresh;
 		cv::GaussianBlur(cv_ptr->image, cv_ptr->image,cv::Size(13,13), 0, 0);
 		cv::cvtColor(cv_ptr->image, cv_ptr->image, cv::COLOR_BGR2HSV);
-		cv::inRange(cv_ptr->image, cv::Scalar(lh,0,0), cv::Scalar(hh,255,255), thresh);
+
+		cv::inRange(cv_ptr->image, cv::Scalar(lh,ls,lv), cv::Scalar(hh,hs,hv), thresh);
+
 		cv::erode(thresh, thresh, ker);
 
 		// Update GUI Window
@@ -63,8 +67,14 @@ int main(int argc, char** argv)
 	ImageConverter ic;
 	cv::namedWindow("ctrl");
 
-	cv::createTrackbar("lh", "ctrl", &lh, 179);
-	cv::createTrackbar("hh", "ctrl", &hh, 179);
+	cv::createTrackbar("lh", "ctrl", &lh, 255);
+	cv::createTrackbar("hh", "ctrl", &hh, 255);
+
+	cv::createTrackbar("ls", "ctrl", &ls, 255);
+	cv::createTrackbar("hs", "ctrl", &hs, 255);
+
+	cv::createTrackbar("lv", "ctrl", &lv, 255);
+	cv::createTrackbar("hv", "ctrl", &hv, 255);
 
 	while(ros::ok()){
 		ros::spinOnce();
