@@ -21,7 +21,7 @@ import roslib
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-from geometry_msgs.msg import Point, PoseStamped
+from geometry_msgs.msg import Point, PointStamped
 
 
 def distance_to_camera(knownHeight, focalLength, perHeight):
@@ -44,7 +44,8 @@ def find_marker(image):
         pinkContour = max(cnts, key = cv2.contourArea) 	
         if (cv2.contourArea(pinkContour) > 200):
             print "Can found"
-            return cv2.minAreaRect(pinkContour), pinkPixels
+            return cv2.boundingRect(pinkContour), pinkPixels
+            #return cv2.minAreaRect(pinkContour), pinkPixels
         else:
             print "No can found (too small)"
             return 0,0
@@ -66,8 +67,8 @@ focalLength = 593.11 # in pixels
 fov = np.deg2rad(60) # field of view
 KNOWN_DISTANCE = 24.0
 #initialize the known object height, which in this case, the can is 4.83" tall
-KNOWN_HEIGHT = 4.83
-KNOWN_WIDTH = 2.89 # TODO : fix this bullshit parameter
+KNOWN_HEIGHT = .123
+KNOWN_WIDTH = 0.065 # TODO : fix this bullshit parameter
 #16n5calibrate the camera for distance
 # KNOWN_IMAGE = pass ########### put path to calibration image here ###############
 
@@ -86,17 +87,17 @@ def img_cb(data):
 
     if result is not None:
         minRect, pinkPixels = result
+    cv2.imshow('pink', pinkPixels)
+    cv2.waitKey(10)
 
     x,y,z = 0,0,0
 
     if (minRect != 0):
         #obtain the info from Rect to draw a box and draw it on the frame
-        box = np.int0(cv2.cv.BoxPoints(minRect))
-        cv2.drawContours(frame, [box], -1, (0, 255, 0), 2)
-
-        ptCen, dim,_  = minRect
-        x, y = ptCen
-        w, h = dim
+        #box = np.int0(cv2.cv.BoxPoints(minRect))
+        #cv2.drawContours(frame, [box], -1, (0, 255, 0), 2)
+        print minRect
+        x,y,w,h  = minRect
         cv2.circle(frame, (int(x), int(y+h/2)), 10, (255, 0, 0), 3)
 
         ptCenBot = [x, y+h/2]
@@ -107,20 +108,22 @@ def img_cb(data):
         # 640x480
         dx = x - 320
         dy = y - 240
-        #d = 320 / np.tan(fov/2) = focalLength
 
         theta = np.arctan(dx/focalLength) # yaw-ish
         phi = np.arctan(dy/focalLength) # pitch
 
         distance = distance_to_camera(KNOWN_WIDTH, focalLength, w) # distance
+        print 'width', w
+        print 'dist', distance
 
-        tgt_msg = PoseStamped()
+        tgt_msg = PointStamped()
+
         tgt_msg.header.frame_id = 'camera'
         tgt_msg.header.stamp = rospy.Time.now()
 
-        tgt_msg.pose.position.x = distance
-        tgt_msg.pose.position.y = -distance * np.tan(theta) # because y is pointed left in ros, flipped
-        tgt_msg.pose.position.z = -distance * np.tan(phi) # because camera coordinates, y is flipped
+        tgt_msg.point.x = distance
+        tgt_msg.point.y = -distance * np.tan(theta) # because y is pointed left in ros, flipped
+        tgt_msg.point.z = -distance * np.tan(phi) # because camera coordinates, y is flipped
 
         tgt_pub.publish(tgt_msg)
         #br = tf.TransformBroadcaster()
@@ -146,7 +149,7 @@ def main():
     #initialize ROS channels
     rospy.init_node('can_finder')
     img_sub = rospy.Subscriber('/alpha/image_raw', Image, img_cb)
-    tgt_pub = rospy.Publisher('can_pose', PoseStamped, queue_size=10)
+    tgt_pub = rospy.Publisher('can_pose', PointStamped, queue_size=10)
 
     #rate = rospy.Rate(20)
     rospy.spin()
