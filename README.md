@@ -59,3 +59,57 @@ Robotic Systems Integration, Olin College of Engineering, SP2017
 	```bash
 	roslaunch alpha_main bringup.launch
 	```
+
+## Running the Simulation
+
+To run the fully integrated simulation for finding the can and heading towards it:
+
+1. Launch the Simulator:
+
+	```bash
+	roslaunch alpha_description gazebo.launch
+	```
+
+1. Launch the Navigation Stack:
+
+	```bash
+	roslaunch alpha_navigation move_base.launch slam:=true
+	```
+
+1. [Optional] In case you'd like to manually control the robot, launch keyboard based teleop:
+
+	```bash
+	#rosrun teleop_twist_keyboard teleop_twist_keyboard.py
+	```
+
+1. [Optional] For better viewing, launch rviz:
+
+	```bash
+	rviz -d $(rospack find alpha_main)/launch/simulation_view.rviz
+	```
+
+1. Launch the exploration node:
+
+	```bash
+	roslaunch frontier_exploration.launch
+	```
+
+1. Launch the State Machine:
+
+	```bash
+	rosrun alpha_main states.py
+	```
+
+1. Launch the Can-Detection Module:
+
+	```bash
+	rosrun alpha_sensors distance_to_target.py
+	```
+
+1. [Optional] In case you want to see the camera feed:
+
+	```bash
+	#rosrun image_view image_view image:=/alpha/image_raw
+	```
+
+Remember to run each of these individually!

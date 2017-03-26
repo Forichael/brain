@@ -5,7 +5,7 @@
 
 	<!-- gmapping slam, tf map to odom and also publishes map -->
 	<group if="$(arg slam)">
-		<!--<include file="$(find alpha_localization)/launch/mapping.launch"/>-->
+		<include file="$(find alpha_localization)/launch/mapping.launch"/>
 	</group>
 
 	<group unless="$(arg slam)">

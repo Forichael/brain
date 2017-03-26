@@ -51,7 +51,7 @@ def find_marker(image):
             return 0,0
     except:
         #make a filterable exception
-        print "No can found at all"
+        #print "No can found at all"
         return 0,0
 
 def calibrate_camera(knownDistance, knownHeight, knownImage): #maybe dont have this in
@@ -149,7 +149,7 @@ def main():
     #initialize ROS channels
     rospy.init_node('can_finder')
     img_sub = rospy.Subscriber('/alpha/image_raw', Image, img_cb)
-    tgt_pub = rospy.Publisher('can_pose', PointStamped, queue_size=10)
+    tgt_pub = rospy.Publisher('can_point', PointStamped, queue_size=10)
 
     #rate = rospy.Rate(20)
     rospy.spin()

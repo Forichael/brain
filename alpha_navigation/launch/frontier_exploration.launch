@@ -12,7 +12,7 @@
 
         #All standard costmap_2d parameters as in move_base, other than BoundedExploreLayer
         <rosparam ns="explore_costmap" subst_value="true">
-            footprint: [[0.75, 0.508], [0.75, -0.508], [-0.75,0.508],[-0.75,-0.508]]
+            footprint: [[0.75, 0.508], [0.75, -0.508], [-0.75,-0.508],[-0.75,0.508]]
             robot_radius: 0.75
             
             transform_tolerance: 0.5

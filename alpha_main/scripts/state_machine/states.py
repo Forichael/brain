@@ -8,8 +8,11 @@ from smach_ros import *
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from alpha_action.msg import GripAction, GripGoal
 from frontier_exploration.msg import ExploreTaskAction, ExploreTaskActionGoal, ExploreTaskGoal
-
 from actionlib import SimpleActionClient
+import tf
+
+
+initial_point = None
 
 class Delay(State):
     def __init__(self, delay_time=1):
@@ -57,7 +60,7 @@ class Explore(State):
                 outcomes=['succeeded', 'discovered', 'aborted'],
                 input_keys=['boundary'],
                 output_keys=['boundary'])
-        self.sub = rospy.Subscriber('/tgt_can_bottom',PointStamped,self.onCan)
+        self.sub = rospy.Subscriber('/can_point',PointStamped,self.onCan)
         self.can_found = False
         #SimpleActionState.__init__(
         #        self,
@@ -76,18 +79,19 @@ class Explore(State):
         print 'SERVER IS NOW UP!'
         
         boundary = PolygonStamped()
-        boundary.header.frame_id = "base_link"
+        boundary.header.frame_id = "map"
         boundary.header.stamp = rospy.Time.now()
         print 'userdata', userdata
         r = userdata.boundary/2.0
         print 'boundary : {}'.format(r)
-        boundary.polygon.points.append(Point(r,r,0))
-        boundary.polygon.points.append(Point(-r,r,0))
-        boundary.polygon.points.append(Point(-r,-r,0))
-        boundary.polygon.points.append(Point(r,-r,0))
+        x,y,_ = initial_point
+        boundary.polygon.points.append(Point(x+r,y+r,0))
+        boundary.polygon.points.append(Point(x-r,y+r,0))
+        boundary.polygon.points.append(Point(x-r,y-r,0))
+        boundary.polygon.points.append(Point(x+r,y-r,0))
 
         center = PointStamped() 
-        center.header.frame_id = "base_link"
+        center.header.frame_id = "odom"
         center.header.stamp = rospy.Time.now()
         center.point.x = center.point.y = center.point.z = 0.0
 
@@ -103,6 +107,7 @@ class Explore(State):
                 userdata.boundary += 1.0 # explore a larger area
                 return 'succeeded' # finished!
             if self.can_found:
+                print 'discovered'
                 return 'discovered'
             # if we're here, then exploration is not complete yet
         return 'aborted'
@@ -146,7 +151,7 @@ class ProximityNav(State):
         self.timeout = rospy.Duration.from_sec(time)
         self.speed = speed
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        self.sub = rospy.Subscriber('/tgt_can_bottom', PointStamped, self.onDetect)
+        self.sub = rospy.Subscriber('/can_point', PointStamped, self.onDetect)
         self.angleError = 0
         self.kp = kp
 
@@ -228,7 +233,15 @@ class Loop(State):
 
 # main
 def main():
+    global initial_point
     rospy.init_node('alphabot_state_machine')
+
+    l = tf.TransformListener()
+
+    l.waitForTransform('base_link','map', rospy.Time.now(), rospy.Time(100))
+    t,r = l.lookupTransform('base_link','map', rospy.Time(0))
+
+    initial_point = t
 
     # Create a SMACH state machine
     sm = StateMachine(outcomes=['succeeded', 'aborted'],

@@ -8,5 +8,8 @@
 		<param name="map_update_interval" value="5"/>
 		<param name="linearUpdate" value="0.2"/>
 		<param name="delta" value="0.05"/>
+
+		<param name="maxUrange" value="5.4"/>
+		<param name="maxRange" value="5.5"/>
 	</node>
 </launch>
