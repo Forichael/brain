@@ -17,7 +17,7 @@ alphabot:
     estimate_velocity_from_position: true 
     
     wheel_radius : 0.062
-    wheel_separation : 1.016
+    wheel_separation : 0.44
     
     # Velocity and acceleration limits
     # Whenever a min_* is unspecified, default to -max_*

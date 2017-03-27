@@ -8,7 +8,7 @@ ros::NodeHandle nh;
 #include "motor.h"
 #include "PID_v1.h"
 
-#define WHEEL_BASE 1.016
+#define WHEEL_BASE 0.44
 const int MOTOR_L_PIN = 2;
 const int MOTOR_R_PIN = 3;
 const int E_STOP_PIN = 7;
