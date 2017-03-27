@@ -65,7 +65,7 @@ class Navigate(State):
             if now - self.last_update > 1.0: # more than a second has passed since sight of can
                 return 'lost_can' # lost can from sight somehow
             dist = self.destination.x**2 + self.destination.y**2
-            if dist < 2.0: # within 2 meters from can
+            if dist < 2.0: # within 4 meters from can
                 return 'succeeded'
 
     def make_goal(self):
@@ -354,7 +354,13 @@ def main():
     data.can_position = Point(1,0,0) 
     data.boundary = 3.0 # start out with 3m x 3m boundary exploration for can
 
+
+    sis = IntrospectionServer('smach', sm, '/SM_ROOT')
+    sis.start()
     outcome = sm.execute(data)
+
+    rospy.spin()
+    sis.stop()
 
 
 if __name__ == '__main__':
