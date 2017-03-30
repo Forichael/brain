@@ -91,13 +91,7 @@ To run the fully integrated simulation for finding the can and heading towards i
 1. Launch the exploration node:
 
 	```bash
-	roslaunch frontier_exploration.launch
-	```
-
-1. Launch the State Machine:
-
-	```bash
-	rosrun alpha_main states.py
+	roslaunch alpha_navigation frontier_exploration.launch
 	```
 
 1. Launch the Can-Detection Module:
@@ -106,10 +100,21 @@ To run the fully integrated simulation for finding the can and heading towards i
 	rosrun alpha_sensors distance_to_target.py
 	```
 
+1. Launch the State Machine:
+
+	```bash
+	rosrun alpha_main states.py
+	```
+
 1. [Optional] In case you want to see the camera feed:
 
 	```bash
 	#rosrun image_view image_view image:=/alpha/image_raw
 	```
 
+1. [Optional] To view the state-machine:
+
+	```bash
+	#rosrun smach_viewer smach_viewer.py
+	```
 Remember to run each of these individually!
