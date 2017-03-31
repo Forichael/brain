@@ -49,8 +49,8 @@ class GripAction{
 			// 1 sec should be quite enough
 
 			while((ros::Time::now() - begin).toSec() < timeout){
-				if(sw_state){
-					result_.gripped = true;
+				if(sw_state == goal->do_grip){
+					result_.gripped = sw_state;
 					as_.setSucceeded(result_);
 					return;
 				}	
@@ -65,7 +65,7 @@ class GripAction{
 			}
 
 			// if no response from limit switch, then obviously something went wrong
-			result_.gripped = false;
+			result_.gripped =  !goal->do_grip;
 			as_.setAborted(result_);
 
 		}
