@@ -6,17 +6,20 @@
 #define IRPinLeft A1
 #define IRPinRight A0
 
-void setupDistanceSensors();
-void loopDistanceSensors();
+extern const int DISTANCE_LOOP_PERIOD;
+
+void setupDistanceSensors(ros::NodeHandle& nh, const char* frame_l, const char* frame_r);
+void loopDistanceSensors(ros::NodeHandle& nh, int period);
 float getRange(int pin_num);
-void HandleIR();
+void HandleIR(ros::NodeHandle& nh);
 
 sensor_msgs::Range left_range_msg;
 sensor_msgs::Range right_range_msg;
 ros::Publisher left_pub_range( "/IR/left", &left_range_msg);
 ros::Publisher right_pub_range( "/IR/right", &right_range_msg);
 
-void setupDistanceSensors(const char* frame_l, const char* frame_r){
+
+void setupDistanceSensors(ros::NodeHandle& nh, const char* frame_l, const char* frame_r){
   nh.advertise(left_pub_range);
   nh.advertise(right_pub_range);
 
@@ -33,13 +36,12 @@ void setupDistanceSensors(const char* frame_l, const char* frame_r){
   right_range_msg.max_range = 0.8;
 }
 
-#define DISTANCE_LOOP_TIME 100 // millis
-void loopDistanceSensors(){
+void loopDistanceSensors(ros::NodeHandle& nh){
     static unsigned long lastUpdateTime = millis();
-
-    if (millis() - lastUpdateTime >= DISTANCE_LOOP_TIME) {
-      lastUpdateTime = millis();
-      HandleIR();
+	unsigned long now = millis();
+    if (now - lastUpdateTime >= DISTANCE_LOOP_PERIOD) {
+      lastUpdateTime = now;
+      HandleIR(nh);
     }
 }
 
@@ -63,7 +65,7 @@ float getRange(int pin_num){
     return (sample - 1)/100; //convert to meters
 }
 
-void HandleIR(){
+void HandleIR(ros::NodeHandle& nh){
   float IRLeftDistance = getRange(IRPinLeft);
   float IRRightDistance = getRange(IRPinRight);
 

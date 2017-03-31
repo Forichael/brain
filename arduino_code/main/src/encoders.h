@@ -11,7 +11,6 @@
 
 #define TICKS_PER_METER 6261
 
-extern ros::NodeHandle nh;
 // Setup encoder data
 
 int32_t l_prv_pos;
@@ -23,16 +22,13 @@ Encoder leftEncoder(19, 21);
 double l_vel;
 double r_vel;
 
-const int ODOM_LOOP_TIME = 20; // ms
+extern const int ODOM_LOOP_PERIOD; // ms
 
 std_msgs::Int16 right_encoder_msg;
 ros::Publisher right_encoder_pub("/rwheel", &right_encoder_msg);
 
 std_msgs::Int16 left_encoder_msg;
 ros::Publisher left_encoder_pub("/lwheel", &left_encoder_msg);
-
-std_msgs::Int16 wtf_msg;
-ros::Publisher wtf_pub("/wtf", &wtf_msg);
 
 void updateEncoders(float dt){
 	int16_t l_pos = leftEncoder.read();
@@ -60,24 +56,20 @@ void updateEncoders(float dt){
 		r_vel = (dl/dt) / TICKS_PER_METER;
 	}
 
-	wtf_msg.data = dl;
-	wtf_pub.publish(&wtf_msg);
-
 	l_prv_pos = l_pos;
 	r_prv_pos = r_pos;
 }
 
-void setupEncoders(){
+void setupEncoders(ros::NodeHandle& nh){
     nh.advertise(right_encoder_pub);
     nh.advertise(left_encoder_pub);
-	nh.advertise(wtf_pub);
 }
 
 void loopEncoders(){
     static unsigned long lastOdomTime = millis();
 	unsigned long now = millis();
 	unsigned long dt = now - lastOdomTime;
-    if (dt >= ODOM_LOOP_TIME) {
+    if (dt >= ODOM_LOOP_PERIOD) {
         updateEncoders(dt/1000.); // convert dt to seconds
         lastOdomTime = now;
     }

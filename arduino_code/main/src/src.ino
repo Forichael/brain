@@ -1,35 +1,43 @@
 #include <ros.h>
-ros::NodeHandle nh;
-
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Int16.h>
 #include "encoders.h"
 #include "distanceSensors.h"
 #include "motor.h"
+#include "gripper.h"
 #include "PID_v1.h"
 
 #define WHEEL_BASE 0.44
-const int MOTOR_L_PIN = 2;
-const int MOTOR_R_PIN = 3;
-const int E_STOP_PIN = 7;
 
-// setup Parameters for the motor
-// without these defined, it won't compile!
+/* ===== SETUP ROS ===== */
+ros::NodeHandle nh;
+const int ODOM_LOOP_PERIOD = 20;
+const int DISTANCE_LOOP_PERIOD = 100;
+const int GRIPPER_LOOP_PERIOD= 50;
+/* ===================== */
+
+/* ===== SETUP MOTOR ===== */
+#define MOTOR_L_PIN 2
+#define MOTOR_R_PIN 3
+#define E_STOP_PIN 7
 int Motor::STOP_SPEED = 1520;
 int Motor::MIN_SPEED = STOP_SPEED - 250;
 int Motor::MAX_SPEED = STOP_SPEED + 250;
 int Motor::DELTA_SPEED = 5;
-
 Motor motor_l;
 Motor motor_r;
+/* ======================= */
 
-const int GRIPPER_PIN = 11;
-const int G_GRIP = 180;
-const int G_RELEASE = 0;
+/* ===== SETUP GRIPPER ===== */
+#define GRIPPER_PIN 11
+#define LIM_SW_PIN 22
+int Gripper::G_GRIP = 180;
+int Gripper::G_RELEASE = 90;
+Gripper gripper(GRIPPER_PIN, LIM_SW_PIN, GRIPPER_LOOP_PERIOD);
+/* ========================= */
 
-Servo gripper;
-bool grip_status = G_RELEASE;
-
+/* ===== SETUP PID ===== */
 double l_out, l_set;
 double r_out, r_set;
 
@@ -41,6 +49,7 @@ double r_out, r_set;
 //l_vel and r_vel are computed from encoders.h, in loopEncoders()
 PID l_pid(&l_vel, &l_out, &l_set, K_P, K_I, K_D, DIRECT); //TODO : tune k_p, k_i, k_d
 PID r_pid(&r_vel, &r_out, &r_set, K_P, K_I, K_D, DIRECT);
+/* ====================== */
 
 void resetPIDs(){
 	l_pid.SetMode(MANUAL);
@@ -68,12 +77,7 @@ void vel_cb(const geometry_msgs::Twist& msg){
 	}
 }
 
-void grip_cb(const std_msgs::Bool& msg){
-	grip_status = msg.data;
-}
-
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", vel_cb);
-ros::Subscriber<std_msgs::Bool> g_sub("grip", grip_cb);
 
 bool readEstop(){
 	return digitalRead(E_STOP_PIN);
@@ -90,17 +94,12 @@ void setup()
 	motor_l.stop();
 	motor_r.stop();
 
-	//Gripper
-	pinMode(GRIPPER_PIN, OUTPUT);
-	gripper.attach(GRIPPER_PIN);
-
 	nh.initNode();
-
 	nh.subscribe(sub);
-	nh.subscribe(g_sub);
 
-	setupEncoders();
-	setupDistanceSensors("l_ir","r_ir");
+	setupEncoders(nh);
+	setupDistanceSensors(nh, "l_ir","r_ir");
+	gripper.setup(nh);
 
 	l_pid.SetMode(AUTOMATIC);
 	r_pid.SetMode(AUTOMATIC);
@@ -109,7 +108,6 @@ void setup()
 void loop()
 {
 	nh.spinOnce(); // vel_cb gets called here
-
 	// run PID
 	if(l_pid.Compute())
 		motor_l.set_dst(v2p(l_out));
@@ -121,8 +119,7 @@ void loop()
 	motor_l.write();
 	motor_r.write();
 
-	gripper.write(grip_status?G_GRIP:G_RELEASE);
-
 	loopEncoders();
-	loopDistanceSensors();
+	loopDistanceSensors(nh); // 100 m period
+	gripper.loop(); // 50 ms period
 }
