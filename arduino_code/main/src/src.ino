@@ -4,11 +4,14 @@
 #include <std_msgs/Int16.h>
 #include "encoders.h"
 #include "distanceSensors.h"
-#include "motor.h"
+//#include "motor.h"
+#include "RoboClaw.h"
+#include <Servo.h> // needs to be included before gipper.h
 #include "gripper.h"
 #include "PID_v1.h"
 
 #define WHEEL_BASE 0.44
+#define E_STOP_PIN 7
 
 /* ===== SETUP ROS ===== */
 ros::NodeHandle nh;
@@ -17,16 +20,9 @@ const int DISTANCE_LOOP_PERIOD = 100;
 const int GRIPPER_LOOP_PERIOD= 50;
 /* ===================== */
 
-/* ===== SETUP MOTOR ===== */
-#define MOTOR_L_PIN 2
-#define MOTOR_R_PIN 3
-#define E_STOP_PIN 7
-int Motor::STOP_SPEED = 1520;
-int Motor::MIN_SPEED = STOP_SPEED - 250;
-int Motor::MAX_SPEED = STOP_SPEED + 250;
-int Motor::DELTA_SPEED = 5;
-Motor motor_l;
-Motor motor_r;
+/* ===== SETUP ROBOCLAW ===== */
+RoboClaw roboclaw(&Serial2, 10000); 
+#define R_ADDR 0x80
 /* ======================= */
 
 /* ===== SETUP GRIPPER ===== */
@@ -41,9 +37,8 @@ Gripper gripper(GRIPPER_PIN, LIM_SW_PIN, GRIPPER_LOOP_PERIOD);
 double l_out, l_set;
 double r_out, r_set;
 
-// #define K_P 0.8775
-#define K_P 0.6
-#define K_I 0.173
+#define K_P 1.0
+#define K_I 0.0
 #define K_D 0.0
 
 //l_vel and r_vel are computed from encoders.h, in loopEncoders()
@@ -60,8 +55,9 @@ void resetPIDs(){
 }
 
 float v2p(float v){
-	return Motor::STOP_SPEED + 408*v - 220*v*v;
-	//return Motor::STOP_SPEED + 408 * v; // made linear
+	return 128*v; // for RoboClaw
+	// actually pretty close to commanded value!
+	//return Motor::STOP_SPEED + 200*v; // for PWM
 }
 
 void vel_cb(const geometry_msgs::Twist& msg){
@@ -88,12 +84,6 @@ void setup()
 	//Serial.begin(9600);
 	pinMode(E_STOP_PIN, INPUT);
 
-	motor_l.attach(MOTOR_L_PIN);
-	motor_r.attach(MOTOR_R_PIN);
-
-	motor_l.stop();
-	motor_r.stop();
-
 	nh.initNode();
 	nh.subscribe(sub);
 
@@ -103,21 +93,29 @@ void setup()
 
 	l_pid.SetMode(AUTOMATIC);
 	r_pid.SetMode(AUTOMATIC);
+
+	roboclaw.begin(38400);
 }
 
 void loop()
 {
 	nh.spinOnce(); // vel_cb gets called here
-	// run PID
-	if(l_pid.Compute())
-		motor_l.set_dst(v2p(l_out));
-	if(r_pid.Compute())
-		motor_r.set_dst(v2p(r_out));
 
-	motor_l.ramp();
-	motor_r.ramp();
-	motor_l.write();
-	motor_r.write();
+	// run PID
+	if(r_pid.Compute()){
+		if(r_out > 0){
+			roboclaw.ForwardM1(R_ADDR, v2p(r_out));
+		}else{
+			roboclaw.BackwardM1(R_ADDR, v2p(-r_out));
+		}
+	}
+	if(l_pid.Compute()){
+		if(l_out > 0){
+			roboclaw.ForwardM2(R_ADDR, v2p(l_out));
+		}else{
+			roboclaw.BackwardM2(R_ADDR, v2p(-l_out));
+		}
+	}
 
 	loopEncoders();
 	loopDistanceSensors(nh); // 100 m period

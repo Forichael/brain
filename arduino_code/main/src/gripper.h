@@ -1,6 +1,7 @@
 #ifndef __GRIPPER_H__
 #define __GRIPPER_H__
 
+#include <Servo.h>
 class Gripper{
 
 public:

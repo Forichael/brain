@@ -1,7 +1,7 @@
 <launch>
 
     <!-- Set to your sensor's range -->
-    <arg name="sensor_range" default="1.0"/>
+    <arg name="sensor_range" default="5.5"/>
 
     <node pkg="frontier_exploration" type="explore_client" name="explore_client" output="screen"/>
 
@@ -12,7 +12,7 @@
 
         #All standard costmap_2d parameters as in move_base, other than BoundedExploreLayer
         <rosparam ns="explore_costmap" subst_value="true">
-            footprint: [[0.4, 0.18], [0.4, -0.18], [-0.3,-0.18],[-0.3,0.18]]
+            footprint: [[0.4, 0.2], [0.4, -0.2], [-0.3,-0.2],[-0.3,0.2]]
             robot_radius: 0.35
             
             transform_tolerance: 0.5

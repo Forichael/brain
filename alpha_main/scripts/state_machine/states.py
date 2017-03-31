@@ -312,10 +312,21 @@ def main():
     global tf_listener
     rospy.init_node('alphabot_state_machine')
 
-    tf_listener = tf.TransformListener()
+    rospy.loginfo('waiting for map->base_link tf transform ...')
 
-    tf_listener.waitForTransform('map','base_link', rospy.Time.now(), rospy.Time(100))
-    t,r = tf_listener.lookupTransform('map','base_link', rospy.Time(0))
+    tf_listener = tf.TransformListener()
+    t,r = None,None
+
+    while True:
+        try:
+            now = rospy.Time.now()
+            tf_listener.waitForTransform('map','base_link', now, rospy.Duration(4.0))
+            t,r = tf_listener.lookupTransform('map','base_link', now)
+            break
+        except (tf.Exception) as e:
+            print e
+
+    rospy.loginfo('tf done!')
 
     # Create a SMACH state machine
     sm = StateMachine(outcomes=['succeeded', 'aborted'],

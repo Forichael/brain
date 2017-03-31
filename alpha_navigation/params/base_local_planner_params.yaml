@@ -2,13 +2,13 @@ TrajectoryPlannerROS:
     holonomic_robot: false # important!
     # setup limits
     max_vel_x : 1.0
-    min_vel_x : 0.2 # faster plz
+    min_vel_x : 0.1 # faster plz
 
     min_vel_y : 0.0
     max_vel_y : 0.0
 
     max_vel_theta : 2.0
-    min_in_place_vel_theta : 0.35
+    min_in_place_vel_theta : 0.1
 
     acc_lim_x : 2.5
     acc_lim_theta : 3.2
@@ -16,4 +16,4 @@ TrajectoryPlannerROS:
 
     #tolerances
     yaw_goal_tolernace: 0.26 #15 degrees
-    xy_goal_tolerance: 0.25  #15 cm
+    xy_goal_tolerance: 0.15  #15 cm
