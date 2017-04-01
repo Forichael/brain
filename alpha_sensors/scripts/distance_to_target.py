@@ -42,7 +42,7 @@ def find_marker(image):
     try: 
         #cv2.contourArea unit: pixel
         pinkContour = max(cnts, key = cv2.contourArea) 	
-        if (cv2.contourArea(pinkContour) > 200):
+        if (cv2.contourArea(pinkContour) > 100):
             print "Can found"
             return cv2.boundingRect(pinkContour), pinkPixels
             #return cv2.minAreaRect(pinkContour), pinkPixels
@@ -87,7 +87,7 @@ def img_cb(data):
 
     if result is not None:
         minRect, pinkPixels = result
-    cv2.imshow('pink', pinkPixels)
+    #cv2.imshow('pink', pinkPixels)
     cv2.waitKey(10)
 
     x,y,z = 0,0,0
@@ -103,7 +103,6 @@ def img_cb(data):
         ptCenBot = [x, y+h/2]
         #Publish the bottom centerpoint to ROS
         pub.publish(Point(x=ptCenBot[0], y=ptCenBot[1]))
-
 
         # 640x480
         dx = x - 320

@@ -5,7 +5,5 @@
 	<include file="$(find alpha_navigation)/launch/frontier_exploration.launch"/>
 	<node name="can_finder" pkg="alpha_sensors" type="distance_to_target.py"/>
 	<!--<node name="smach" pkg="alpha_main" type="states.py" output="screen"/>-->
-	<node name="smach_viewer" pkg="smach_viewer" type="smach_viewer.py" output="screen"/>
-	<!--<node name="image_view" pkg="image_view" type="image_view" args="image:=/alpha/image_raw" output="screen"/>-->
 	<!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find alpha_main)/launch/simulation_view.rviz"/>-->
 </launch>

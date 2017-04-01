@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import math
 import rospy
+import numpy as np
 from geometry_msgs.msg import PoseStamped, PolygonStamped, PointStamped, Pose, Quaternion, Point, Twist, Vector3
 from std_msgs.msg import Header
 from smach import *
@@ -11,6 +12,40 @@ from frontier_exploration.msg import ExploreTaskAction, ExploreTaskActionGoal, E
 from actionlib import SimpleActionClient
 import tf
 
+
+## Try to filter the can's position by just removing outliers and taking the mean ...
+## Caution here is the assumption that the map stays relatively correct & stable over time
+def MahalanobisDist(x, y):
+    covariance_xy = np.cov(x,y, rowvar=0)
+    inv_covariance_xy = np.linalg.inv(covariance_xy)
+    xy_mean = np.mean(x),np.mean(y)
+    x_diff = np.array([x_i - xy_mean[0] for x_i in x])
+    y_diff = np.array([y_i - xy_mean[1] for y_i in y])
+    diff_xy = np.transpose([x_diff, y_diff])
+    
+    md = []
+    for i in range(len(diff_xy)):
+        md.append(np.sqrt(np.dot(np.dot(np.transpose(diff_xy[i]),inv_covariance_xy),diff_xy[i])))
+    return md
+
+def MD_removeOutliers(x, y):
+    MD = MahalanobisDist(x, y)
+    threshold = np.mean(MD) * 1.5 # adjust 1.5 accordingly 
+    nx, ny, outliers = [], [], []
+    for i in range(len(MD)):
+        if MD[i] <= threshold:
+            nx.append(x[i])
+            ny.append(y[i])
+        else:
+            outliers.append(i) # position of removed pair
+    return (np.array(nx), np.array(ny))
+
+def filtered_can_point(xs,ys):
+    xs,ys = MD_removeOutliers(xs,ys)
+    x,y = (np.mean((xs,ys), axis=1))
+    return Point(x,y,0)
+
+filtered_can_point_pub = None
 
 tf_listener = None
 
@@ -36,14 +71,46 @@ class Navigate(State):
                 input_keys=['destination'],
                 output_keys=['initial_point']
                 )
-        self.destination = None
+        self.destination = Point()
+
+        self.dests_x = []
+        self.dests_y = []
+
+        self.dest_in_map = Point()
         self.last_update = rospy.Time.now().to_sec()
 
     def onCan(self, msg):
-        self.destination = tf_listener.transformPoint("base_link", msg).point
-        self.last_update = rospy.Time.now().to_sec()
+        global filtered_can_point_pub
+        n_attempts = 10
+        for _ in range(10):
+            try:
+                now = rospy.Time.now()
+                tf_listener.waitForTransform('map','base_link', now, rospy.Duration(1.0))
+                dest = tf_listener.transformPoint("base_link", msg)
+                self.destination = dest.point
+                p = tf_listener.transformPoint("map", msg).point
+
+                self.dests_x.append(p.x)
+                self.dests_y.append(p.y)
+
+                if len(self.dests_x) > 10:
+                    self.dest_in_map = filtered_can_point(self.dests_x, self.dests_y)
+                    f_p = PointStamped() 
+                    f_p.header.frame_id = "map"
+                    f_p.header.stamp = now 
+                    f_p.point = self.dest_in_map
+                    filtered_can_point_pub.publish(f_p)
+                    self.destination = tf_listener.transformPoint("base_link", f_p).point
+                else:
+                    self.dest_in_map = p
+
+                self.last_update = now.to_sec()
+                return
+            except (tf.Exception, tf.ExtrapolationException) as e:
+                pass
 
     def execute(self, userdata):
+
         self.sub = rospy.Subscriber('/can_point', PointStamped, self.onCan) # TODO : just separate this out
         rospy.loginfo('Beginning Navigation to Can')
 
@@ -59,24 +126,16 @@ class Navigate(State):
             goal = self.make_goal()
             client.send_goal_and_wait(goal, execute_timeout=rospy.Duration(5.0)) # wait 10 sec. until completion
             now = rospy.Time.now().to_sec()
-            if now - self.last_update > 1.0: # more than a second has passed since sight of can
+
+            p = self.dest_in_map
+            if p.x != 0 and p.y != 0:
+                print 'setting initial point : xyz {} {} {}'.format(p.x,p.y,p.z)
+                # next time, search around can area
+                userdata.initial_point = [p.x, p.y, p.z]
+
+            if now - self.last_update > 5.0: # more than 5 seconds have passed since sight of can
                 self.sub.unregister()
                 client.cancel_all_goals()
-
-                initial_point = PointStamped()
-                initial_point.point = self.destination
-                initial_point.header.frame_id = 'base_link'
-                initial_point.header.stamp = rospy.Time(self.last_update)
-
-                while True:
-                    try:
-                        tf_listener.waitForTransform('map','base_link', rospy.Time(self.last_update), rospy.Time(1))
-                        p = tf_listener.transformPoint("map",initial_point).point
-                        userdata.initial_point = [p.x, p.y, p.z]
-                        break
-                    except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-                        print e
-                # next time, search around can area
 
                 return 'lost_can' # lost can from sight somehow
             dist = self.destination.x**2 + self.destination.y**2
@@ -89,7 +148,11 @@ class Navigate(State):
         rospy.loginfo('Calculating navigation goal')
 
         x,y =  self.destination.x, self.destination.y
-        theta = math.atan2(x,y)
+        theta = math.atan2(y,x)
+
+        r = 0.5 # 50cm back from the can position
+        x -= r * math.cos(theta)
+        y -= r * math.sin(theta)
 
         angle = Quaternion(0, 0, math.sin(theta / 2), math.cos(theta / 2))
 
@@ -155,10 +218,19 @@ class Explore(State):
 
         while True:
             if client.wait_for_result(rospy.Duration(0.3)): # 0.3 sec. timeout to check for cans
-                # if exploration is complete...
-                userdata.boundary += 1.0 # explore a larger area
-                self.sub.unregister()
-                return 'succeeded' # finished!
+                res = client.get_state()
+                rospy.loginfo('EXPLORE SERVER STATE:{}'.format(res))
+                if res == 3: ## SUCCEEDED
+                    # if exploration is complete...
+                    userdata.boundary += 1.0 # explore a larger area
+                    self.sub.unregister()
+                    return 'succeeded' # finished! yay!
+                elif res == 4: ## "ABORTED" ?? keep trying...
+                    self.sub.unregister()
+                    return 'succeeded'
+                else:
+                    # when explore server gives up, can't explore
+                    return 'aborted'
             #exploration is not complete yet...
             if self.can_time != None: # check initialized
                 can_found = (rospy.Time.now() - self.can_time).to_sec() < 0.3
@@ -248,6 +320,7 @@ class ProximityNav(State):
             self.pub.publish(Twist(linear=Vector3(x=self.speed), angular=Vector3(z=turnPower)))
             r.sleep()
             if (rospy.Time.now() - self.last_detected).to_sec() > 0.5:
+                self.sub.unregister()
                 return 'lost_can'
 
         # Stop the robot
@@ -309,10 +382,11 @@ class Loop(State):
 
 # main
 def main():
-    global tf_listener
+    global tf_listener, filtered_can_point_pub
     rospy.init_node('alphabot_state_machine')
-
     rospy.loginfo('waiting for map->base_link tf transform ...')
+
+    filtered_can_point_pub = rospy.Publisher('/filtered_can_point', PointStamped, queue_size=10)
 
     tf_listener = tf.TransformListener()
     t,r = None,None
@@ -340,7 +414,7 @@ def main():
                 transitions={
                     'succeeded' : 'EXPLORE',
                     'discovered' : 'NAV1', # This should be NAV1
-                    'aborted': 'EXPLORE'
+                    'aborted': 'aborted'
                     },
                 remapping={'boundary':'boundary'} # keep on exploring with larger areas until can is found!
                 )
