@@ -204,7 +204,7 @@
 			</link>
 		</model>
 		<model name="can">
-			<pose>2.0 -2.0 0.06 0 0 0</pose>
+			<pose>3.0 -4.0 0.06 0 0 0</pose>
 			<static>true</static>
 			<link name="can">
 				<visual name="can_visual">

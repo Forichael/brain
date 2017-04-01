@@ -67,7 +67,7 @@ To run the fully integrated simulation for finding the can and heading towards i
 1. Launch the Simulator:
 
 	```bash
-	roslaunch alpha_description gazebo.launch
+	roslaunch alpha_main gazebo.launch
 	```
 
 1. Launch the Navigation Stack:

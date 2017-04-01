@@ -37,11 +37,6 @@
 		<node name="gazebo_gui" pkg="gazebo_ros" type="gzclient" respawn="false" output="screen"/>
 	</group>
 
-	<!--<include file="$(find gazebo_ros)/launch/empty_world.launch">
-		<arg name="world_name" value="$(find alpha_description)/world/default.world"/>
-	</include>-->
-
-
 	<include file="$(find alpha_control)/launch/alpha_control.launch"/>
 
 	<param name="robot_description"

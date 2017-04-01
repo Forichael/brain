@@ -278,7 +278,7 @@ def Grip(close=True):
 
 
 class ProximityNav(State):
-    def __init__(self, time=6, speed=0.2, kp=1.0/200):
+    def __init__(self, time=6, speed=0.2, kp=2.0):
         State.__init__(self, outcomes=['succeeded','lost_can'])
         self.timeout = rospy.Duration.from_sec(time)
         self.max_speed = speed
