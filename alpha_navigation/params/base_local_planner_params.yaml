@@ -1,21 +1,38 @@
-TrajectoryPlannerROS:
-    holonomic_robot: false # important!
-    # setup limits
-    max_vel_x : 1.0
-    min_vel_x : 0.1 # faster plz
+#TrajectoryPlannerROS:
+#    holonomic_robot: false # important!
+#    # setup limits
+#    max_vel_x : 1.0
+#    min_vel_x : 0.1 # faster plz
+#
+#    escape_vel: -0.1 # backing up
+#
+#    min_vel_y : 0.0
+#    max_vel_y : 0.0
+#
+#    max_vel_theta : 0.8 # lower?
+#    min_in_place_vel_theta : 0.1
+#
+#    acc_lim_x : 3.5
+#    acc_lim_theta : 3.2
+#    acc_lim_y : 0.0
+#
+#    #tolerances
+#    yaw_goal_tolernace: 0.26 #15 degrees
+#    xy_goal_tolerance: 0.15  #15 cm
 
-    escape_vel: -0.1 # backing up
-
-    min_vel_y : 0.0
-    max_vel_y : 0.0
-
-    min_in_place_vel_theta : 0.1
-    max_vel_theta : 1.0
-
-    acc_lim_x : 2.5
-    acc_lim_theta : 3.2
-    acc_lim_y : 0.0
-
-    #tolerances
-    yaw_goal_tolernace: 0.26 #15 degrees
-    xy_goal_tolerance: 0.15  #15 cm
+DWAPlannerROS:
+    acc_lim_x: 3.5
+    acc_lim_y: 0.0
+    acc_lim_theta: 3.2
+    max_trans_vel: 1.0
+    min_trans_vel: -1.0
+    max_vel_x: 1.0
+    min_vel_x: -1.0
+    max_vel_y: 0.0
+    min_vel_y: 0.0
+    max_rot_vel: 0.8
+    min_rot_vel: -0.8
+    yaw_goal_tolerance: 0.26
+    xy_goal_tolerance: 0.30
+    vx_samples: 8
+    vy_samples: 1

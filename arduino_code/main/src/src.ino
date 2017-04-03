@@ -61,9 +61,8 @@ void resetPIDs(){
 }
 
 float v2p(float v){
-	return 128*v; // for RoboClaw
+	return 1.18*128*v; // for RoboClaw
 	// actually pretty close to commanded value!
-	//return Motor::STOP_SPEED + 200*v; // for PWM
 }
 
 void vel_cb(const geometry_msgs::Twist& msg){
@@ -125,17 +124,17 @@ void loop()
 
 	// run PID
 	if(r_pid.Compute()){
-		if(r_out > 0){
-			roboclaw.ForwardM1(R_ADDR, v2p(r_out));
+		if(r_set > 0){
+			roboclaw.ForwardM1(R_ADDR, v2p(r_set));
 		}else{
-			roboclaw.BackwardM1(R_ADDR, v2p(-r_out));
+			roboclaw.BackwardM1(R_ADDR, v2p(-r_set));
 		}
 	}
 	if(l_pid.Compute()){
-		if(l_out > 0){
-			roboclaw.ForwardM2(R_ADDR, v2p(l_out));
+		if(l_set > 0){
+			roboclaw.ForwardM2(R_ADDR, v2p(l_set));
 		}else{
-			roboclaw.BackwardM2(R_ADDR, v2p(-l_out));
+			roboclaw.BackwardM2(R_ADDR, v2p(-l_set));
 		}
 	}
 
