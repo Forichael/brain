@@ -8,12 +8,12 @@ map_type: costmap
 obstacle_layer:
     observation_sources: scan
     track_unknown_space: true
-    scan: {data_type: LaserScan, sensor_frame: /laser, topic: /scan, clearing: true, marking: true}
+    scan: {data_type: LaserScan, sensor_frame: /laser, topic: /scan, clearing: true, marking: true, expected_update_rate: 0.15}
 
 inflation_layer:
     enabled : True 
     cost_scaling_factor: 5
-    inflation_radius: 0.1
+    inflation_radius: 0.2
 
 static_layer:
     enabled: True
