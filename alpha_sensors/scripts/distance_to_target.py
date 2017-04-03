@@ -88,7 +88,7 @@ def img_cb(data):
     if result is not None:
         minRect, pinkPixels = result
     #cv2.imshow('pink', pinkPixels)
-    cv2.waitKey(10)
+    #cv2.waitKey(10)
 
     x,y,z = 0,0,0
 

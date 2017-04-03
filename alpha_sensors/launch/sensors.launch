@@ -5,7 +5,10 @@
 
 	<include file="$(find alpha_sensors)/launch/imu.launch"/>
 	<include file="$(find alpha_sensors)/launch/camera.launch"/>
-	<node name="lidar" pkg="urg_node" type="urg_node" args="_serial_port:=/dev/serial/by-id/usb-Hokuyo_Data_Flex_for_USB_URG-Series_USB_Driver-if00"/>
+	<node name="lidar" pkg="urg_node" type="urg_node" args="_serial_port:=/dev/serial/by-id/usb-Hokuyo_Data_Flex_for_USB_URG-Series_USB_Driver-if00">
+		<param name="angle_min" value="-1.55"/>
+		<param name="angle_max" value="1.57"/>
+	</node>
 	<node name="gps" pkg="nmea_navsat_driver" type="nmea_serial_driver" args="_port:=/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_7_-_GPS_GNSS_Receiver-if00 _baud:=115200"/>
 	<!-- IR/Sonar is managed by Arduino (ROSSERIAL), don't launch here -->
 </launch>

@@ -1,5 +1,6 @@
 #include <ros.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Point.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Int16.h>
 #include "encoders.h"
@@ -37,9 +38,14 @@ Gripper gripper(GRIPPER_PIN, LIM_SW_PIN, GRIPPER_LOOP_PERIOD);
 double l_out, l_set;
 double r_out, r_set;
 
-#define K_P 1.0
-#define K_I 0.0
+#ifdef TUNE_PID
+float K_P=1.0, K_I=0.0, K_D=0.0;
+#else
+#define K_P 0.75
+#define K_I 0.05
 #define K_D 0.0
+#endif
+
 
 //l_vel and r_vel are computed from encoders.h, in loopEncoders()
 PID l_pid(&l_vel, &l_out, &l_set, K_P, K_I, K_D, DIRECT); //TODO : tune k_p, k_i, k_d
@@ -75,6 +81,19 @@ void vel_cb(const geometry_msgs::Twist& msg){
 
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", vel_cb);
 
+#ifdef TUNE_PID
+void pid_cb(const geometry_msgs::Point& msg){
+	K_P = msg.x;
+	K_I = msg.y;
+	K_D = msg.z;
+
+	resetPIDs();
+	l_pid.SetTunings(K_P,K_I,K_D);
+	r_pid.SetTunings(K_P,K_I,K_D);
+}
+ros::Subscriber<geometry_msgs::Point> pid_sub("pid", pid_cb);
+#endif
+
 bool readEstop(){
 	return digitalRead(E_STOP_PIN);
 }
@@ -86,6 +105,9 @@ void setup()
 
 	nh.initNode();
 	nh.subscribe(sub);
+#ifdef TUNE_PID
+	nh.subscribe(pid_sub);
+#endif
 
 	setupEncoders(nh);
 	setupDistanceSensors(nh, "l_ir","r_ir");

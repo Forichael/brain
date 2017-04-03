@@ -4,9 +4,9 @@
 	<arg name="slam" default="false"/>
 
 	<!-- gmapping slam, tf map to odom and also publishes map -->
-	<group if="$(arg slam)">
+	<!--<group if="$(arg slam)">
 		<include file="$(find alpha_localization)/launch/mapping.launch"/>
-	</group>
+	</group>-->
 
 	<group unless="$(arg slam)">
 		<!-- map server -->
