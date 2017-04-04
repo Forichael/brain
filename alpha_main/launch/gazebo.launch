@@ -1,4 +1,6 @@
 <launch>
+	<env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find alpha_description)/models" />
+
 	<!-- these are the arguments you can pass this launch file, for example paused:=true -->
 	<arg name="paused" default="false"/>
 	<arg name="use_sim_time" default="true"/>
@@ -56,4 +58,6 @@
 		pkg="rostopic"
 		type="rostopic"
 		args="pub /calibrated std_msgs/Bool true" />
+
+	<include file="$(find alpha_action)/launch/action.launch"/>
 </launch>

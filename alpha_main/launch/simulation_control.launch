@@ -1,8 +1,11 @@
 <launch>
+	<include file="$(find alpha_localization)/launch/mapping.launch"/>
 	<include file="$(find alpha_navigation)/launch/move_base.launch">
 		<arg name="slam" value="true"/>
 	</include>
 	<include file="$(find alpha_navigation)/launch/frontier_exploration.launch"/>
+	<include file="$(find alpha_action)/launch/action.launch"/>
+	<include file="$(find alpha_sensors)/launch/apriltags.launch"/>
 	<node name="can_finder" pkg="alpha_sensors" type="distance_to_target.py"/>
 	<!--<node name="smach" pkg="alpha_main" type="states.py" output="screen"/>-->
 	<!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find alpha_main)/launch/simulation_view.rviz"/>-->

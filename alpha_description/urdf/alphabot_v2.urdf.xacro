@@ -800,8 +800,8 @@
 					<horizontal>
 						<samples>740</samples>
 						<resolution>1</resolution>
-						<min_angle>-2.356</min_angle>
-						<max_angle>2.0923</max_angle>
+						<min_angle>-1.55</min_angle>
+						<max_angle>1.57</max_angle>
 					</horizontal>
 				</scan>
 				<range>
@@ -822,4 +822,7 @@
 		</sensor>
 	</gazebo>
 
+	<gazebo>
+		<plugin name="alpha_fake_gripper" filename="libalpha_fake_gripper.so"/>
+	</gazebo>
 </robot>
