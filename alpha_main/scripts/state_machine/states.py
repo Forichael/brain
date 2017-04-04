@@ -170,6 +170,59 @@ class Navigate(State):
         goal = MoveBaseGoal(target_pose=dest)
         return goal
 
+class Stuck(State):
+    def __init__(self, n_attempts=10):
+        State.__init__(
+                self,
+                outcomes=['succeeded','aborted']
+                )
+        self.initial_pose = Pose()
+        self.n_attempts = n_attempts
+
+    def execute(self, userdata):
+        while True: # absolutely need to get the transforms.
+            try:
+                t,r = tf_listener.lookupTransform('map','base_link', rospy.Time.now())
+                break
+            except:
+                pass
+        p = self.initial_pose.position
+        o = self.initial_pose.orientation
+        p.x,p.y,p.z = t
+        o.x,o.y,o.z,o.w = r
+        
+        client = SimpleActionClient('move_base', MoveBaseAction)
+        rospy.loginfo('Waiting for MOVE_BASE SERVER ...')
+        client.wait_for_server()
+        rospy.loginfo('MOVE_BASE SERVER IS UP!')
+
+        for _ in self.n_attempts:
+            goal = self.make_goal()
+            state = client.send_goal_and_wait(goal, execute_timeout=rospy.Duration(20.0)) # wait 20 sec. until completion
+            rospy.loginfo('Attempting Unstuck, State : {}'.format(state))
+            if state == 3: # succeeded
+                return 'succeeded'
+        return 'aborted'
+
+    def make_goal(self):
+        r = 1.0
+        dx,dy = r * np.random.random(2)
+        p0 = self.initial_pose.position
+
+        th = np.random.uniform(-np.pi,np.pi)
+        qz = np.sin(th/2)
+        qw = np.cos(th/2)
+
+        target_pose = PoseStamped(
+                header=Header(frame_id='map'),
+                pose=Pose(
+                    position=Point(p0.x+dx,p0.y+dy,p0.z),
+                    orientation=Quaternion(x=0,y=0,z=qz,w=qw)
+                    )
+                )
+        goal = MoveBaseGoal(target_pose=target_pose)
+        return goal
+
 
 class Explore(State):
     def __init__(self, objective):
@@ -260,10 +313,10 @@ class Explore(State):
                     userdata.boundary += 1.0 # explore a larger area
                     return 'succeeded' # finished! yay!
                 elif res == 4: ## "ABORTED" ?? keep trying...
-                    return 'stuck'
+                    return 'succeeded'
                 else:
                     # when explore server gives up, can't explore
-                    return 'aborted'
+                    return 'stuck'
 
             #if we're here, exploration is not complete yet...
             if self.dst_time != None: # check initialized
@@ -276,7 +329,7 @@ class Explore(State):
 
             # more than 10 seconds have passed while completely still
             # we're probably stuck
-            if (rospy.Time.now() - self.last_mv).to_sec() > 10.0:
+            if (rospy.Time.now() - self.last_mv).to_sec() > 20.0:
                 client.cancel_all_goals()
                 return 'stuck' # bad name... "stuck" would be better
         return 'aborted'
@@ -462,7 +515,7 @@ def main():
             StateMachine.add('EXPLORE', Explore('discovery'),
                     transitions={
                         'succeeded' : 'EXPLORE',
-                        'stuck' : 'EXPLORE',
+                        'stuck' : 'STUCK',
                         'discovered' : 'NAV',
                         'aborted' : 'aborted'
                         }
@@ -472,6 +525,12 @@ def main():
                         'succeeded':'PNAV',
                         'lost':'EXPLORE',
                         'aborted':'EXPLORE'
+                        }
+                    )
+            StateMachine.add('STUCK', Stuck('EXPLORE'),
+                    transitions={
+                        'succeeded':'EXPLORE',
+                        'aborted':'aborted'
                         }
                     )
             StateMachine.add('PNAV',ProximityNav(speed=0.2),
