@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
+	<arg name="sim" default="false"/>
 	<!-- wheel odometry -->
-	<include file="$(find alpha_localization)/launch/odom.launch"/>
+	<include unless="$(arg sim)" file="$(find alpha_localization)/launch/odom.launch"/>
 
 	<!-- local -->
 	<include file="$(find alpha_localization)/launch/localization_local.launch"/>

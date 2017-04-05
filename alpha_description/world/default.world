@@ -164,7 +164,7 @@
 				</visual>
 			</link>
 
-			<link name="cyl_1">
+			<!--<link name="cyl_1">
 				<pose>0 -1.5 0.5 0 0 0</pose>
 				<collision name="collision">
 					<geometry>
@@ -229,12 +229,12 @@
 						<script>Gazebo/WoodPallet</script>
 					</material>
 				</visual>
-			</link>
+			</link>-->
 		</model>
 
 
 		<model name="can">
-			<pose>-2.45 -3.15 0.06 0 0 0</pose>
+			<pose>-2.45 -4.15 0.06 0 0 0</pose>
 			<static>false</static>
 			<link name="can">
 				<visual name="can_visual">

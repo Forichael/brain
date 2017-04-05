@@ -46,7 +46,7 @@ namespace gazebo{
 		}else{
 			if(!attached){
 				gazebo::math::Pose diff = obj->GetLink()->GetWorldPose() - base_link->GetWorldPose();
-				float tolerance = 0.025; // 2.5cm tolerance
+				float tolerance = 0.05; // 5cm tolerance
 				std::cout << "Pose Diff : " << diff << std::endl;
 				if (fabs(.36-diff.pos.x) < tolerance && fabs(0.0 - diff.pos.y) < tolerance){
 

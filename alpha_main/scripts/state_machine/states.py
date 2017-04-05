@@ -330,9 +330,9 @@ class Explore(State):
                     userdata.destination = self.dst_point
                     return 'discovered'
 
-            # more than 10 seconds have passed while completely still
+            # more than 20 seconds have passed while completely still
             # we're probably stuck
-            if (rospy.Time.now() - self.last_mv).to_sec() > 10.0:
+            if (rospy.Time.now() - self.last_mv).to_sec() > 20.0:
                 client.cancel_all_goals()
                 return 'stuck' # bad name... "stuck" would be better
         return 'aborted'
@@ -389,7 +389,7 @@ def Grip(close=True):
 
 
 class ProximityNav(State):
-    def __init__(self, time=6, speed=0.2, kp=2.0):
+    def __init__(self, time=6, speed=0.2, kp=2.0, objective='discovery'):
         State.__init__(self, outcomes=['succeeded','lost'])
         self.timeout = rospy.Duration.from_sec(time)
         self.max_speed = speed
@@ -397,7 +397,7 @@ class ProximityNav(State):
         self.angleError = 0
         self.kp = kp
         self.dist = 9999
-
+        self.objective = objective
         self.last_detected = rospy.Time.now()
 
     def onDetect(self, msg):
@@ -419,8 +419,16 @@ class ProximityNav(State):
         rospy.loginfo('Angle Error : {}; Distance : {}'.format(self.angleError, dist))
         self.last_detected = msg.header.stamp
 
-    def execute(self, userdata):
-        self.sub = rospy.Subscriber('/can_point', PointStamped, self.onDetect)
+    def subscribe(self):
+        if self.objective == 'discovery':
+            self.sub = rospy.Subscriber('/can_point', PointStamped, self.onDetect)
+        elif self.objective == 'delivery':
+            self.sub = rospy.Subscriber('/del_pt', PointStamped, self.onDetect)
+
+    def unsubscribe(self):
+        self.sub.unregister()
+
+    def execute_inner(self, userdata):
         self.speed = self.max_speed
 
         start_time = rospy.Time.now()
@@ -434,19 +442,23 @@ class ProximityNav(State):
             turnPower = self.kp * self.angleError
             self.pub.publish(Twist(linear=Vector3(x=self.speed), angular=Vector3(z=turnPower)))
             r.sleep()
-            if (rospy.Time.now() - self.last_detected).to_sec() > 0.5:
+            if (rospy.Time.now() - self.last_detected).to_sec() > 1.0:
+                print '???'
                 if self.dist < 0.5: # most likely, the can is too close to the robot so the camera cannot see
-                    self.sub.unregister()
                     return 'succeeded'
                 else:
-                    self.sub.unregister()
                     return 'lost'
 
         # Stop the robot
         self.pub.publish(Twist())
         rospy.loginfo('Finished drive')
-        self.sub.unregister()
         return 'succeeded'
+
+    def execute(self, userdata):
+        self.subscribe()
+        res = self.execute_inner(userdata)
+        self.unsubscribe()
+        return res
 
 
 class Backup(State):
@@ -553,7 +565,7 @@ def main():
                         'aborted':'aborted'
                         }
                     )
-            StateMachine.add('PNAV',ProximityNav(speed=0.2),
+            StateMachine.add('PNAV',ProximityNav(objective='discovery'),
                     transitions={
                         'succeeded':'GRIP',
                         'lost':'EXPLORE'
@@ -575,24 +587,30 @@ def main():
             StateMachine.add('EXPLORE', Explore('delivery'),
                     transitions={
                         'succeeded' : 'EXPLORE',
-                        'stuck' : 'EXPLORE',
+                        'stuck' : 'STUCK',
                         'discovered' : 'NAV',
                         'aborted' : 'aborted'
                         }
                     )
+            StateMachine.add('STUCK', Stuck(),
+                    transitions={
+                        'succeeded':'EXPLORE',
+                        'aborted':'aborted'
+                        }
+                    )
             StateMachine.add('NAV', Navigate('delivery'),
                     transitions={
-                        'succeeded':'PNAV',
+                        'succeeded':'RELEASE',
                         'lost':'EXPLORE',
                         'aborted':'EXPLORE'
                         }
                     )
-            StateMachine.add('PNAV',ProximityNav(speed=0.2),
-                    transitions={
-                        'succeeded':'RELEASE',
-                        'lost':'EXPLORE'
-                        }
-                    )
+            #StateMachine.add('PNAV',ProximityNav(objective='delivery'),
+            #        transitions={
+            #            'succeeded':'RELEASE',
+            #            'lost':'EXPLORE'
+            #            }
+            #        )
             StateMachine.add('RELEASE', Grip(False),
                     transitions={
                         'succeeded': 'succeeded',
