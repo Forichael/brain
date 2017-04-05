@@ -1,7 +1,9 @@
 <launch>
 
 	<arg name="map_file" default="$(find alpha_navigation)/maps/AC1.04.yaml"/>
+
 	<arg name="slam" default="false"/>
+	<arg name="sim" default="false"/>
 
 	<!-- gmapping slam, tf map to odom and also publishes map -->
 	<!--<group if="$(arg slam)">
@@ -27,6 +29,6 @@
 		<rosparam file="$(find alpha_navigation)/params/global_costmap_params.yaml" command="load" />
 		<rosparam file="$(find alpha_navigation)/params/base_local_planner_params.yaml" command="load"/>
 		<!-- <remap from="cmd_vel" to="cmd_vel"/> -->
-		<!--<remap from="odom" to="odometry/filtered/local"/>--> <!-- local? -->
+		<remap unless="$(arg sim)" from="odom" to="odometry/filtered/local"/> <!-- local? -->
 	</node>
 </launch>

@@ -60,4 +60,7 @@
 		args="pub /calibrated std_msgs/Bool true" />
 
 	<include file="$(find alpha_action)/launch/action.launch"/>
+	<include file="$(find alpha_sensors)/launch/lidar.launch">
+		<arg name="sim" value="true"/>
+	</include>
 </launch>

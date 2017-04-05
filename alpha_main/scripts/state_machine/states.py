@@ -10,6 +10,7 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from alpha_action.msg import GripAction, GripGoal
 from frontier_exploration.msg import ExploreTaskAction, ExploreTaskActionGoal, ExploreTaskGoal
 from actionlib import SimpleActionClient
+from topic_tools.srv import MuxSelect
 import tf
 
 
@@ -195,18 +196,22 @@ class Stuck(State):
         rospy.loginfo('Waiting for MOVE_BASE SERVER ...')
         client.wait_for_server()
         rospy.loginfo('MOVE_BASE SERVER IS UP!')
-
-        for _ in self.n_attempts:
+        for i in range(self.n_attempts):
+            rospy.loginfo("Attempting Unstuck, {} / {}".format(i+1,self.n_attempts))
             goal = self.make_goal()
-            state = client.send_goal_and_wait(goal, execute_timeout=rospy.Duration(20.0)) # wait 20 sec. until completion
-            rospy.loginfo('Attempting Unstuck, State : {}'.format(state))
-            if state == 3: # succeeded
-                return 'succeeded'
+            client.send_goal(goal)
+            start = rospy.Time.now()
+            while (rospy.Time.now() - start).to_sec() < 30.0: # wait 30 sec. for success
+                if client.wait_for_result(rospy.Duration(1.0)): # if move_base decides earlier that a goal is impossible...
+                    res = client.get_state()
+                    if res == 3: ## SUCCEEDED
+                        return 'succeeded'
         return 'aborted'
 
     def make_goal(self):
-        r = 1.0
-        dx,dy = r * np.random.random(2)
+        dx = np.random.choice([np.random.uniform(-0.75,-0.25), np.random.uniform(0.25,0.75)])
+        dy = np.random.choice([np.random.uniform(-0.75,-0.25), np.random.uniform(0.25,0.75)])
+
         p0 = self.initial_pose.position
 
         th = np.random.uniform(-np.pi,np.pi)
@@ -312,8 +317,6 @@ class Explore(State):
                     # if exploration is complete...
                     userdata.boundary += 1.0 # explore a larger area
                     return 'succeeded' # finished! yay!
-                elif res == 4: ## "ABORTED" ?? keep trying...
-                    return 'succeeded'
                 else:
                     # when explore server gives up, can't explore
                     return 'stuck'
@@ -329,13 +332,24 @@ class Explore(State):
 
             # more than 10 seconds have passed while completely still
             # we're probably stuck
-            if (rospy.Time.now() - self.last_mv).to_sec() > 20.0:
+            if (rospy.Time.now() - self.last_mv).to_sec() > 10.0:
                 client.cancel_all_goals()
                 return 'stuck' # bad name... "stuck" would be better
         return 'aborted'
 
     def execute(self, userdata):
         self.subscribe()
+
+        # select lidar data, depending on can
+        rospy.wait_for_service('scan_select')
+        scan_select = rospy.ServiceProxy('scan_select',  MuxSelect)
+        try:
+            topic = 'scan_raw' if self.objective == 'discovery' else 'scan_filtered'
+            mux_res = scan_select(topic=topic)
+        except rospy.ServiceException as e:
+            print 'Failed to Select Scan : ' + str(e)
+            return 'aborted'
+
         res = self.execute_inner(userdata)
         self.unsubscribe()
         return res
@@ -382,6 +396,7 @@ class ProximityNav(State):
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.angleError = 0
         self.kp = kp
+        self.dist = 9999
 
         self.last_detected = rospy.Time.now()
 
@@ -396,6 +411,7 @@ class ProximityNav(State):
         self.angleError = math.atan2(point.y,point.x)
 
         self.speed = 0.05 * dist #adjust w.r.t. distance
+        self.dist = dist
 
         if self.speed > self.max_speed:
             self.speed = self.max_speed
@@ -419,8 +435,12 @@ class ProximityNav(State):
             self.pub.publish(Twist(linear=Vector3(x=self.speed), angular=Vector3(z=turnPower)))
             r.sleep()
             if (rospy.Time.now() - self.last_detected).to_sec() > 0.5:
-                self.sub.unregister()
-                return 'lost'
+                if self.dist < 0.5: # most likely, the can is too close to the robot so the camera cannot see
+                    self.sub.unregister()
+                    return 'succeeded'
+                else:
+                    self.sub.unregister()
+                    return 'lost'
 
         # Stop the robot
         self.pub.publish(Twist())
@@ -527,7 +547,7 @@ def main():
                         'aborted':'EXPLORE'
                         }
                     )
-            StateMachine.add('STUCK', Stuck('EXPLORE'),
+            StateMachine.add('STUCK', Stuck(),
                     transitions={
                         'succeeded':'EXPLORE',
                         'aborted':'aborted'

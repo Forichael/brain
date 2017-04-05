@@ -48,11 +48,21 @@ namespace gazebo{
 				gazebo::math::Pose diff = obj->GetLink()->GetWorldPose() - base_link->GetWorldPose();
 				float tolerance = 0.025; // 2.5cm tolerance
 				std::cout << "Pose Diff : " << diff << std::endl;
-				if (abs(.36-diff.pos.x) < tolerance && abs(0.0 - diff.pos.y) < tolerance){
+				if (fabs(.36-diff.pos.x) < tolerance && fabs(0.0 - diff.pos.y) < tolerance){
 
 					gazebo::math::Pose p = obj->GetLink()->GetWorldPose(); // make upright
+
 					p.rot.SetToIdentity();
+
+					//float rz = b_p.rot.z;
+					//float dx = .36 * cos(rz);
+					//float dy = .36 * sin(rz);
+					//p.pos.x = b_p.pos.x + dx;
+					//p.pos.y = b_p.pos.y + dy;
 					obj->GetLink()->SetWorldPose(p);
+					
+					diff.pos.x = .36;
+					diff.pos.y = 0.0;
 
 					gripper_joint->Load(base_link,obj->GetLink(), diff);
 					gripper_joint->Attach(base_link,obj->GetLink());
@@ -60,7 +70,7 @@ namespace gazebo{
 					gripper_joint->SetHighStop(0, 0);
 					gripper_joint->SetLowStop(0, 0);
 
-					obj->GetLink()->SetCollideMode("none");
+					obj->GetLink()->SetCollideMode("fixed");
 
 					attached = true;
 				}
