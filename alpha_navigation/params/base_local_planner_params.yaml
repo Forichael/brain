@@ -29,13 +29,13 @@ DWAPlannerROS:
     acc_lim_theta: 3.2
     max_trans_vel: 1.0
     min_trans_vel: -1.0
-    max_vel_x: 1.0
-    min_vel_x: -1.0
+    max_vel_x: 0.3
+    min_vel_x: -0.3
     max_vel_y: 0.0
     min_vel_y: 0.0
-    max_rot_vel: 0.8
-    min_rot_vel: -0.8
-    yaw_goal_tolerance: 0.26
-    xy_goal_tolerance: 0.30
+    max_rot_vel: 0.3
+    min_rot_vel: -0.3
+    yaw_goal_tolerance: 0.17 #10 degrees
+    xy_goal_tolerance: 0.10 # 10 cm
     vx_samples: 8
     vy_samples: 1

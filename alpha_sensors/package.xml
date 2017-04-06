@@ -50,6 +50,9 @@
   <run_depend>nav_msgs</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
+  <run_depend>laser_filters</run_depend>
+  <run_depend>apriltags_ros</run_depend>
+
 
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -15,7 +15,7 @@
             footprint: [[0.4, 0.2], [0.4, -0.2], [-0.3,-0.2],[-0.3,0.2]]
             robot_radius: 0.35
             
-            transform_tolerance: 0.5
+            transform_tolerance: 2.0
             update_frequency: 1.1
             publish_frequency: 5.0
 

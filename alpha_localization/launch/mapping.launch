@@ -9,8 +9,8 @@
 		<param name="map_update_interval" value="0.1"/>
 
 		<param name="linearUpdate" value="0.2"/>
-		<!--<param name="angularUpdate" value="0.5"/>
-		<param name="temporalUpdate" value="1.0"/>-->
+		<!--<param name="angularUpdate" value="0.5"/>-->
+		<param name="temporalUpdate" value="0.5"/>
 
 		<param name="delta" value="0.05"/>
 
