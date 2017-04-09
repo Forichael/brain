@@ -169,6 +169,7 @@ class Navigate(State):
                 pose=Pose(position=Point(x=x, y=y, z=0), orientation=angle))
 
         goal = MoveBaseGoal(target_pose=dest)
+
         return goal
 
 class Stuck(State):
@@ -268,6 +269,7 @@ class Explore(State):
             self.sub = rospy.Subscriber('/dis_pt',PointStamped,self.onMsg)
         elif self.objective == 'delivery':
             self.sub = rospy.Subscriber('/del_pt',PointStamped,self.onMsg)
+
         self.cmd_sub= rospy.Subscriber('/cmd_vel',Twist,self.onCmdVel)
 
     def unsubscribe(self):
@@ -318,21 +320,25 @@ class Explore(State):
                     userdata.boundary += 1.0 # explore a larger area
                     return 'succeeded' # finished! yay!
                 else:
+                    print 'explore server failed : {}'.format(res)
                     # when explore server gives up, can't explore
                     return 'stuck'
 
             #if we're here, exploration is not complete yet...
             if self.dst_time != None: # check initialized
-                discovered = (rospy.Time.now() - self.dst_time).to_sec() < 0.3
+                dt = (rospy.Time.now() - self.dst_time).to_sec()
+                print 'DT : {}'.format(dt)
+                discovered = (dt < 1.0)
                 if discovered:
                     # if can was found ...
                     client.cancel_all_goals()
                     userdata.destination = self.dst_point
                     return 'discovered'
 
-            # more than 20 seconds have passed while completely still
+            # more than 60 seconds have passed while completely still
             # we're probably stuck
-            if (rospy.Time.now() - self.last_mv).to_sec() > 20.0:
+            if (rospy.Time.now() - self.last_mv).to_sec() > 60.0:
+                print 'haven\'t been moving for a while!'
                 client.cancel_all_goals()
                 return 'stuck' # bad name... "stuck" would be better
         return 'aborted'
@@ -381,12 +387,26 @@ class Explore(State):
     #    return goal
 
 
+#class Grip(State):
+#    def __init__(self, close=True):
+#        State.__init__(self,
+#                outcomes=['succeeded','preempted','aborted'],
+#                input_keys=['boundary', 'initial_point'])
+#        self.close = close
+#    def execute(self, userdata):
+#        client = SimpleActionClient('alpha_grip', GripAction)
+#        client.wait_for_server()
+#        goal = GripGoal()
+#        goal.do_grip = self.close
+#        status = client.send_goal_and_wait(goal)
+#        if status == 2: # succeeded
+#        print status
+#        return 
 
 def Grip(close=True):
     gripper_goal = GripGoal()
     gripper_goal.do_grip = close
     return SimpleActionState('alpha_grip', GripAction, goal=gripper_goal)
-
 
 class ProximityNav(State):
     def __init__(self, time=6, speed=0.2, kp=2.0, objective='discovery'):
@@ -554,7 +574,7 @@ def main():
                     )
             StateMachine.add('NAV', Navigate('discovery'),
                     transitions={
-                        'succeeded':'PNAV',
+                        'succeeded':'RELEASE', # release gripper before pnav
                         'lost':'EXPLORE',
                         'aborted':'EXPLORE'
                         }
@@ -573,9 +593,16 @@ def main():
                     )
             StateMachine.add('GRIP', Grip(True),
                     transitions={
-                        'succeeded': 'succeeded',
+                        'succeeded': 'succeeded', # start delivery
                         'preempted': 'GRIP',
-                        'aborted': 'PNAV'
+                        'aborted': 'RELEASE' # release before continuing nav
+                        }
+                    )
+            StateMachine.add('RELEASE', Grip(False),
+                    transitions={
+                        'succeeded' : 'PNAV',
+                        'preempted' : 'RELEASE',
+                        'aborted' : 'aborted'
                         }
                     )
 
@@ -631,9 +658,7 @@ def main():
                     'aborted':'DELIVERY'
                     }
                 )
-
-
-        sm.set_initial_state(['DISCOVERY'])
+        sm.set_initial_state(['DELIVERY'])
 
     # Execute the machine
     data = UserData()
