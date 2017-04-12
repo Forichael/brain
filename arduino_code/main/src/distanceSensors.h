@@ -96,7 +96,7 @@ void HandleIR(ros::NodeHandle& nh){
 }
 
 void HandleUltrasound(ros::NodeHandle& nh){
-  float UltrasoundDistance = analogRead(UltrasoundPin);
+  float UltrasoundDistance = analogRead(UltrasoundPin)*(5000/1024.0)/9.8*(2.54/1)/100;
 
   ultrasound_range_msg.range = UltrasoundDistance;
   ultrasound_range_msg.header.stamp = nh.now();
