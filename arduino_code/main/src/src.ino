@@ -109,7 +109,7 @@ void setup()
 #endif
 
 	setupEncoders(nh);
-	setupDistanceSensors(nh, "l_ir","r_ir");
+	setupDistanceSensors(nh, "l_ir","r_ir","ultrasound");
 	//gripper.setup(nh);
 
 	l_pid.SetMode(AUTOMATIC);
