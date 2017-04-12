@@ -5,7 +5,7 @@
 
 #define IRPinLeft A1
 #define IRPinRight A0
-#define UltrasoundPin A2
+#define UltrasoundPin A7
 
 extern const int DISTANCE_LOOP_PERIOD;
 
@@ -43,8 +43,8 @@ void setupDistanceSensors(ros::NodeHandle& nh, const char* frame_l, const char* 
   ultrasound_range_msg.radiation_type = sensor_msgs::Range::ULTRASOUND;
   ultrasound_range_msg.header.frame_id = frame_ultrasound; 
   ultrasound_range_msg.field_of_view = 1.5; //TODO: double check this value
-  ultrasound_range_msg.min_range = 0;
-  ultrasound_range_msg.max_range = 6; //TODO: double check this value
+  ultrasound_range_msg.min_range = 0.3;
+  ultrasound_range_msg.max_range = 5; //TODO: double check this value
 }
 
 void loopDistanceSensors(ros::NodeHandle& nh){
