@@ -55,6 +55,7 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>dwa_local_planner</run_depend>
+  <run_depend>frontier_exploration</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
