@@ -1,4 +1,4 @@
-#include "alpha_action/fake_gripper.h"
+#include "alpha_gazebo/fake_gripper.h"
 #include <boost/bind.hpp>
 
 namespace gazebo{
