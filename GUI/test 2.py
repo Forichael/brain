@@ -1,9 +1,13 @@
+#!/usr/bin/env python
+
 from Tkinter import *
 import tkMessageBox
 import Tkinter as tk
 import time
+import rospy
+from std_msgs.msg import String
 
-
+rospy.init_node('GUI')
 
 class Page(tk.Frame):
     
@@ -44,29 +48,37 @@ class Page5(Page):
        label = tk.Label(self, text= "hello" )
        label.pack(side="bottom", fill="both", expand=True)
        
-       C = tk.Canvas(self, height=500, width=800, borderwidth=0, highlightthickness=0,)
+       self.C = tk.Canvas(self, height=500, width=800, borderwidth=0, highlightthickness=0,)
        
-       C.create_oval(10,10,110,110, fill='green2')
-       C.create_text(60,60,fill="navy",text="Status1",font ="Times 20 bold")
-       #C.create_oval(10,10,110,110, fill='red')
+       #C.create_oval(10,10,110,110, fill='green2')
        #C.create_text(60,60,fill="navy",text="Status1",font ="Times 20 bold")
+       self.C.create_oval(10,10,110,110, fill='red')
+       self.C.create_text(60,60,fill="navy",text="Status1",font ="Times 20 bold")
 
-       C.create_oval(10,120,110,220, fill='green2')
-       C.create_text(60,170,fill="navy",text="Status2",font ="Times 20 bold")
+       self.C.create_oval(10,120,110,220, fill='green2')
+       self.C.create_text(60,170,fill="navy",text="Status2",font ="Times 20 bold")
        #C.create_oval(10,120,110,220, fill='red')
        #C.create_text(60,170,fill="navy",text="Status2",font ="Times 20 bold")
        
-       C.create_oval(10,230,110,330, fill='green2')
-       C.create_text(60,280,fill="navy",text="Status3",font ="Times 20 bold")
+       self.C.create_oval(10,230,110,330, fill='green2')
+       self.C.create_text(60,280,fill="navy",text="Status3",font ="Times 20 bold")
        #C.create_oval(10,230,110,330, fill='red')
        #C.create_text(60,280,fill="navy",text="Status3",font ="Times 20 bold")
        
-       C.create_oval(10,340,110,440, fill='green2')
-       C.create_text(60,390,fill="navy",text="Status4",font ="Times 20 bold")
+       self.C.create_oval(10,340,110,440, fill='green2')
+       self.C.create_text(60,390,fill="navy",text="Status4",font ="Times 20 bold")
        #C.create_oval(10,340,110,440, fill='red')
        #C.create_text(60,390,fill="navy",text="Status4",font ="Times 20 bold")
 
-       C.pack(side="left", fill = "both",expand =True) 
+       self.C.pack(side="left", fill = "both",expand =True)
+       rospy.Subscriber("test", String, self.USB)
+       
+
+   def USB(self, msg):
+       print "We got data!"
+       self.C.create_oval(10,10,110,110, fill='green2')
+       self.C.create_text(60,60,fill="navy",text="Status1",font ="Times 20 bold")
+       
 
 class Page6(Page):
    def __init__(self, *args, **kwargs):
