@@ -12,12 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
 	actionlib_msgs
 	roscpp
 	rospy
-	gazebo_ros
 	sensor_msgs
 	std_msgs
 	)
-find_package(gazebo REQUIRED)
-link_directories(${GAZEBO_LIBARRY_DIRS})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -112,7 +109,7 @@ catkin_package(
 	#  INCLUDE_DIRS include
 	#  LIBRARIES alpha_action
 	CATKIN_DEPENDS actionlib_msgs
-	DEPENDS roscpp gazebo_ros
+	DEPENDS roscpp 
 	#  DEPENDS system_lib
 	)
 
@@ -123,20 +120,11 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
+
 include_directories(
 	${catkin_INCLUDE_DIRS}
 	${Boost_INCLUDE_DIR}
-	${GAZEBO_INCLUDE_DIRS}
 	include/
-	)
-
-## Declare a C++ library
-add_library(alpha_fake_gripper SHARED
-  src/fake_gripper.cpp
-)
-target_link_libraries(alpha_fake_gripper
-	${catkin_LIBRARIES}
-	${GAZEBO_LIBRARIES}
 	)
 
 ## Add cmake target dependencies of the library
