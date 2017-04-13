@@ -29,9 +29,9 @@ RoboClaw roboclaw(&Serial2, 10000);
 /* ===== SETUP GRIPPER ===== */
 #define GRIPPER_PIN 11
 #define LIM_SW_PIN 22
-int Gripper::G_GRIP = 180;
-int Gripper::G_RELEASE = 90;
-Gripper gripper(GRIPPER_PIN, LIM_SW_PIN, GRIPPER_LOOP_PERIOD);
+//int Gripper::G_GRIP = 180;
+//int Gripper::G_RELEASE = 90;
+//Gripper gripper(GRIPPER_PIN, LIM_SW_PIN, GRIPPER_LOOP_PERIOD);
 /* ========================= */
 
 /* ===== SETUP PID ===== */
@@ -109,8 +109,8 @@ void setup()
 #endif
 
 	setupEncoders(nh);
-	setupDistanceSensors(nh, "l_ir","r_ir");
-	gripper.setup(nh);
+	setupDistanceSensors(nh, "l_ir","r_ir","ultrasound");
+	//gripper.setup(nh);
 
 	l_pid.SetMode(AUTOMATIC);
 	r_pid.SetMode(AUTOMATIC);
@@ -140,5 +140,5 @@ void loop()
 
 	loopEncoders();
 	loopDistanceSensors(nh); // 100 m period
-	gripper.loop(); // 50 ms period
+	//gripper.loop(); // 50 ms period
 }
