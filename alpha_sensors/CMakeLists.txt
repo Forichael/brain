@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
   std_msgs
+  costmap_2d
 )
 
 ## System dependencies are found with CMake's conventions
@@ -138,6 +139,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(threshold_node src/threshold.cpp)
+add_executable(camera_map_node src/camera_map.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -154,7 +156,9 @@ target_link_libraries(threshold_node
  ${catkin_LIBRARIES}
  )
 
-
+target_link_libraries(camera_map_node
+	${catkin_LIBRARIES}
+	)
 #############
 ## Install ##
 #############

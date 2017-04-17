@@ -8,9 +8,17 @@
 	</node>
 
 	<node name="lidar_mux" pkg="topic_tools" type="mux" args="scan scan_raw scan_filtered"/>
+
 	<node name="can_filter" pkg="laser_filters" type="scan_to_scan_filter_chain">
 		<rosparam command="load" file="$(find alpha_sensors)/config/can_filter_config.yaml"/>
 		<remap from="scan" to="scan_raw"/>
+	</node>
+
+	<!-- CAMERA FOV FILTER -->
+	<node name="camera_fov_filter" pkg="laser_filters" type="scan_to_scan_filter_chain">
+		<rosparam command="load" file="$(find alpha_sensors)/config/camera_fov_filter.yaml"/>
+		<remap from="scan" to="scan_raw"/>
+		<remap from="scan_filtered" to="camera_scan"/>
 	</node>
 
 </launch>

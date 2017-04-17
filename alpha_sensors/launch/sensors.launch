@@ -11,5 +11,7 @@
 	</include>
 	<node name="gps" pkg="nmea_navsat_driver" type="nmea_serial_driver" args="_port:=/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_7_-_GPS_GNSS_Receiver-if00 _baud:=115200"/>
 	<node name="can_finder" pkg="alpha_sensors" type="distance_to_target.py"/>
+	
+
 	<!-- IR/Sonar is managed by Arduino (ROSSERIAL), don't launch here -->
 </launch>

@@ -1,0 +1,11 @@
+scan_filter_chain: # ugly hack
+    - name: low 
+      type: LaserScanAngularBoundsFilter
+      params:
+          lower_angle: -3.14
+          upper_angle: -0.52
+    - name: high 
+      type: LaserScanAngularBoundsFilter
+      params:
+          lower_angle: 0.52
+          upper_angle: 3.14
