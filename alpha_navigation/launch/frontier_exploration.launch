@@ -42,7 +42,7 @@
                 resize_to_boundary: false
                 frontier_travel_point: middle
                 #set to false for gmapping, true if re-exploring a known area
-                explore_clear_space: true
+                explore_clear_space: false
 
             sensor:
                 observation_sources: laser
