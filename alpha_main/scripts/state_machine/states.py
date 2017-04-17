@@ -658,7 +658,7 @@ def main():
                     'aborted':'DELIVERY'
                     }
                 )
-        sm.set_initial_state(['DELIVERY'])
+        sm.set_initial_state(['DISCOVERY'])
 
     # Execute the machine
     data = UserData()

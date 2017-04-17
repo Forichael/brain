@@ -1,0 +1,10 @@
+<class_libraries>
+	<library path="lib/libalpha_sensors_filters">
+		<class name="alpha_sensors/CameraFilter" type="alpha_sensors::CameraFilter"
+			base_class_type="filters::FilterBase<sensor_msgs::LaserScan>">
+				<description>
+					This is a filter that pretends like the camera's field of view is what's seen by the Lidar.
+				</description>
+			</class>
+		</library>
+	</class_libraries>

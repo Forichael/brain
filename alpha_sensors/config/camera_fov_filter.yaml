@@ -1,11 +1,7 @@
-scan_filter_chain: # ugly hack
-    - name: low 
-      type: LaserScanAngularBoundsFilter
+scan_filter_chain:
+    - name: camera_filter
+      type: alpha_sensors/CameraFilter 
       params:
-          lower_angle: -3.14
-          upper_angle: -0.52
-    - name: high 
-      type: LaserScanAngularBoundsFilter
-      params:
-          lower_angle: 0.52
-          upper_angle: 3.14
+          lower_threshold : 0.01
+          upper_threshold : 2.5
+          fov: 1.02 # TODO : can it really detect things at the outskirt of vision?
