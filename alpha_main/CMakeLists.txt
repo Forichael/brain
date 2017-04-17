@@ -113,8 +113,15 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+	include/
   ${catkin_INCLUDE_DIRS}
 )
+
+add_executable(dancer_node src/dance.cpp src/pid.cpp)
+
+target_link_libraries(dancer_node
+	${catkin_LIBRARIES}
+	)
 
 ## Declare a C++ library
 # add_library(alpha_main
@@ -137,6 +144,7 @@ include_directories(
 # target_link_libraries(alpha_main_node
 #   ${catkin_LIBRARIES}
 # )
+
 
 #############
 ## Install ##
