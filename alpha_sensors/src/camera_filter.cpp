@@ -105,7 +105,7 @@ namespace alpha_sensors
 						}
 						else if(r >= upper_threshold_){
 							// if higher than thresh, then "valid" -- just cap it
-							r = upper_threshold_ - 1e-3;
+							r = std::numeric_limits<float>::infinity(); //upper_threshold_ - 1e-3;
 						}
 
 						current_angle += inc;
