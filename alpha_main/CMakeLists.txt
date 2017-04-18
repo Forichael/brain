@@ -7,6 +7,9 @@ project(alpha_main)
 find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	std_msgs
+	move_base
+	actionlib
+	tf
 )
 
 ## System dependencies are found with CMake's conventions
