@@ -608,7 +608,8 @@ def main():
                              )
             StateMachine.add('GRIP', Grip(True),
                              transitions={
-                                 'succeeded': 'succeeded',  # start delivery
+                                 # Change to "succeeded" when not testing just PNAV
+                                 'succeeded': 'aborted',  # start delivery
                                  'preempted': 'GRIP',
                                  'aborted': 'RELEASE'  # release before continuing nav
                              }
