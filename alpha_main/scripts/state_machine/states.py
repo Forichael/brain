@@ -491,7 +491,7 @@ class ProximityNav(State):
 
             self.pub.publish(Twist(linear=Vector3(x=speed), angular=Vector3(z=turn_power)))
 
-            if (now - last_far_can_time).to_sec() > 1.0:
+            if (now - last_far_can_time).to_sec() > 2.0:
                 # I lost the can or have been close to it for one second
                 if dist < 0.6:  # most likely, the can is too close to the robot so the camera cannot see
                     self.pub.publish(Twist())
