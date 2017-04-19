@@ -769,7 +769,7 @@ def main():
                              }
                              )
 
-            StateMachine.add('EXPLORE2', Explore('discovery'),
+            StateMachine.add('EXPLORE2', Explore_v2('discovery'),
                              # TODO: try backing up before attempting to re-grip
                              transitions={
                                  'succeeded': 'aborted',
