@@ -97,7 +97,7 @@ class MissionSubscriber(object):
     def convert(self, msg):
         try:
             now = rospy.Time.now()
-            tf_listener.waitForTransform('map', msg.header.frame_id, now, rospy.Duration(1.0))
+            tf_listener.waitForTransform('map', msg.header.frame_id, msg.header.stamp, rospy.Duration(1.0))
             p = tf_listener.transformPoint("map", msg).point
             return p, True
         except (tf.Exception, tf.ExtrapolationException, tf.LookupException) as e:
@@ -464,22 +464,24 @@ class ProximityNav(State):
             elif self.objective == 'delivery':
                 dest = ms.del_pt()  # here, you can look for april tags
                 t = ms.del_data.time
+            else:
+                rospy.logerr('Invalid objective to ProximityNav')
+                return 'lost'
 
-            pt = PointStamped(header=Header(stamp=now, frame_id='map'), point=dest)
-            tf_listener.waitForTransform('map', 'base_link', now, rospy.Duration(4.0))
-            point = tf_listener.transformPoint("base_link", pt).point
+            map_pt = PointStamped(header=Header(stamp=rospy.Time(0), frame_id='map'), point=dest)
+            local_point = tf_listener.transformPoint('base_link', map_pt).point
 
-            dist = math.sqrt(point.x ** 2 + point.y ** 2)
-            angleError = math.atan2(point.y, point.x)
+            dist = math.sqrt(local_point.x ** 2 + local_point.y ** 2)
+            angle_error = math.atan2(local_point.y, local_point.x)
 
-            rospy.loginfo('Angle Error : {}; Distance : {}'.format(angleError, dist))
+            rospy.loginfo('Angle Error : {}; Distance : {}'.format(angle_error, dist))
 
-            speed = 0.2 * dist  # assumedly, given dist<1.0, always under approx. 0.2m/s
+            speed = 0.2 * dist + 0.1  # assumedly, given dist<1.0, always under approx. 0.2m/s
             if speed > self.max_speed:
                 speed = self.max_speed
 
-            turnPower = self.kp * angleError
-            self.pub.publish(Twist(linear=Vector3(x=speed), angular=Vector3(z=turnPower)))
+            turn_power = self.kp * angle_error
+            self.pub.publish(Twist(linear=Vector3(x=speed), angular=Vector3(z=turn_power)))
 
             if (now - t).to_sec() > 1.0:
                 # I lost the can 1 second ago
@@ -487,6 +489,10 @@ class ProximityNav(State):
                     return 'succeeded'
                 else:
                     return 'lost'
+
+            if dist < 0.2:
+                # I'm on top of the can
+                return 'succeeded'
 
             r.sleep()
 
