@@ -437,7 +437,7 @@ def Grip(close=True):
 class ProximityNav(State):
     # TODO: make this faster
     # TODO: go the right distance to actually grab the can
-    def __init__(self, time=10, speed=0.3, kp=2.0, objective='discovery'):
+    def __init__(self, time=10, speed=0.25, kp=2.0, objective='discovery'):
         State.__init__(self, outcomes=['succeeded', 'lost'])
         self.timeout = rospy.Duration.from_sec(time)
         self.max_speed = speed
@@ -476,7 +476,7 @@ class ProximityNav(State):
 
             rospy.loginfo('Angle Error : {}; Distance : {}'.format(angle_error, dist))
 
-            speed = 0.2 * dist + 0.1  # assumedly, given dist<1.0, always under approx. 0.2m/s
+            speed = 0.2 * dist + 0.05  # assumedly, given dist<1.0, always under approx. 0.2m/s
 
             if speed > self.max_speed:
                 speed = self.max_speed
