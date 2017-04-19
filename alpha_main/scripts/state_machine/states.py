@@ -827,7 +827,7 @@ def main():
                              )
 
         # TODO: Remove when not testing proximity nav
-        sm_dis.set_initial_state(['EXPLORE2'])
+        # sm_dis.set_initial_state(['EXPLORE2'])
 
         sm_del = StateMachine(
             outcomes=['succeeded', 'aborted'],
