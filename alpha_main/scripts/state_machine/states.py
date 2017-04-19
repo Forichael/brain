@@ -454,6 +454,8 @@ class ProximityNav(State):
         rospy.loginfo('Beginning drive to can')
         r = rospy.Rate(20)
 
+        last_far_can_time = rospy.Time.now()
+
         # Drive the robot
         while rospy.Time.now() - start_time < self.timeout and not rospy.is_shutdown():
 
@@ -475,6 +477,9 @@ class ProximityNav(State):
             dist = math.sqrt(local_point.x ** 2 + local_point.y ** 2)
             angle_error = math.atan2(local_point.y, local_point.x)
 
+            if dist > 0.6:
+                last_far_can_time = t
+
             rospy.loginfo('Angle Error : {}; Distance : {}'.format(angle_error, dist))
 
             speed = 0.2 * dist + 0.05  # assumedly, given dist<1.0, always under approx. 0.2m/s
@@ -486,9 +491,9 @@ class ProximityNav(State):
 
             self.pub.publish(Twist(linear=Vector3(x=speed), angular=Vector3(z=turn_power)))
 
-            if (now - t).to_sec() > 1.0:
-                # I lost the can 1 second ago
-                if dist < 0.5:  # most likely, the can is too close to the robot so the camera cannot see
+            if (now - last_far_can_time).to_sec() > 1.0:
+                # I lost the can or have been close to it for one second
+                if dist < 0.6:  # most likely, the can is too close to the robot so the camera cannot see
                     self.pub.publish(Twist())
                     return 'succeeded'
                 else:
