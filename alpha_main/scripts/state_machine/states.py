@@ -430,7 +430,7 @@ class Explore(State):
 
 
 class Explore_v2(State):
-    def __init__(self, objective):
+    def __init__(self, objective, spacing=0.5):
         # boundary is a floating point number of square side length,
         # initial_point is a length-3 list
         State.__init__(self,
@@ -441,7 +441,15 @@ class Explore_v2(State):
         self.objective = objective
         self.last_mv = rospy.Time.now()
 
+        self.spacing = spacing
+        self.num_points = 3
+
         self.cmd_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+
+        self.client = SimpleActionClient('move_base', MoveBaseAction)
+        rospy.loginfo('Waiting for MOVE_BASE SERVER ...')
+        self.client.wait_for_server()
+        rospy.loginfo('MOVE_BASE SERVER IS UP!')
 
     def onCmdVel(self, msg):
         l = msg.linear
@@ -461,34 +469,73 @@ class Explore_v2(State):
             self.cmd_sub = None
 
     def spin_circle(self):
-        speed = 0.3
+        rospy.loginfo('spinning')
+
+        # TODO: use odometry
+        speed = 0.5
         startTime = rospy.Time.now()
         r = rospy.Rate(10)
-        while (rospy.Time.now() - startTime) < 2 * math.pi / speed:
+        while (rospy.Time.now() - startTime).to_sec() < 2 * math.pi / speed:
+            if rospy.is_shutdown():
+                exit()
+
             self.cmd_pub.publish(Twist(angular=Vector3(z=speed)))
             r.sleep()
 
         self.cmd_pub.publish(Twist())
+
+    def generate_points(self, userdata):
+        """
+        A python generator function to create a list of points to try visiting.
+        """
+        # TODO: generate along multiple axes
+        x, y, _ = userdata.initial_point
+        x, y = 0, 0
+
+        i = 0
+        for _ in range(self.num_points):
+            point = PointStamped()
+            point.header.frame_id = "map"
+            point.point.x = x + i * self.spacing
+            point.point.y = y
+            point.point.z = 0.0
+
+            i += 1
+
+            yield point
+
+    def go_to_point(self, point):
+        """
+        :type point: PointStamped
+        """
+        rospy.loginfo('Going to point {}'.format(point.point))
+
+        theta = 0
+
+        angle = Quaternion(0, 0, math.sin(theta / 2), math.cos(theta / 2))
+
+        dest = PoseStamped(
+            header=point.header,
+            pose=Pose(position=point.point, orientation=angle))
+
+        goal = MoveBaseGoal(target_pose=dest)
+
+        self.client.send_goal_and_wait(goal)
 
     def execute_inner(self, userdata):
         global ms
         self.last_mv = rospy.Time.now()
 
         rospy.loginfo('Beginning Exploration v2')
+        # self.spin_circle()
 
-        x, y, _ = userdata.initial_point
+        for point in self.generate_points(userdata):
+            self.go_to_point(point)
+            self.spin_circle()
 
-        center = PointStamped()
-        center.header.frame_id = "map"
-        center.point.x = x
-        center.point.y = y
-        center.point.z = 0.0
-
-        self.spin_circle()
         return 'succeeded'
 
         while True:
-
 
             if rospy.is_shutdown():
                 exit()
@@ -544,11 +591,11 @@ class Explore_v2(State):
         # rospy.wait_for_service('scan_select')
         # scan_select = rospy.ServiceProxy('scan_select', MuxSelect)
         # try:
-            # topic = 'scan_raw' if self.objective == 'discovery' else 'scan_filtered'
-            # mux_res = scan_select(topic=topic)
+        # topic = 'scan_raw' if self.objective == 'discovery' else 'scan_filtered'
+        # mux_res = scan_select(topic=topic)
         # except rospy.ServiceException as e:
         #     print 'Failed to Select Scan : ' + str(e)
-            # return 'aborted'
+        # return 'aborted'
 
         # rospy.loginfo('Successfully Selected scan data!')
 
