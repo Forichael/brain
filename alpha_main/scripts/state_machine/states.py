@@ -622,6 +622,9 @@ def main():
                              }
                              )
 
+        # TODO: Remove when not testing proximity nav
+        sm_dis.set_initial_state(['PNAV'])
+
         sm_del = StateMachine(
             outcomes=['succeeded', 'aborted'],
             input_keys=['destination', 'initial_point', 'boundary'])
@@ -664,7 +667,7 @@ def main():
         StateMachine.add('DISCOVERY', sm_dis,
                          transitions={
                              'succeeded': 'DELIVERY',
-                             'aborted': 'DISCOVERY'  # alternatively, halt
+                             'aborted': 'aborted'  # alternatively, halt
                          }
                          )
 
