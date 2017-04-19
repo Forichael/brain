@@ -259,11 +259,17 @@ class Stuck(State):
         client.wait_for_server()
         rospy.loginfo('MOVE_BASE SERVER IS UP!')
         for i in range(self.n_attempts):
+            if rospy.is_shutdown():
+                exit()
+
             rospy.loginfo("Attempting Unstuck, {} / {}".format(i + 1, self.n_attempts))
             goal = self.make_goal()
             client.send_goal(goal)
             start = rospy.Time.now()
             while (rospy.Time.now() - start).to_sec() < 30.0:  # wait 30 sec. for success
+                if rospy.is_shutdown():
+                    exit()
+
                 if client.wait_for_result(
                         rospy.Duration(1.0)):  # if move_base decides earlier that a goal is impossible...
                     res = client.get_state()
@@ -355,6 +361,9 @@ class Explore(State):
         client.send_goal(goal)
 
         while True:
+            if rospy.is_shutdown():
+                exit()
+
             if client.wait_for_result(rospy.Duration(0.3)):  # 0.3 sec. timeout to check for cans
                 # The exploration node has finished
                 res = client.get_state()
