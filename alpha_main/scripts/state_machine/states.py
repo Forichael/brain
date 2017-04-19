@@ -595,6 +595,11 @@ def main():
                                  'aborted': 'aborted'
                              }
                              )
+            StateMachine.add('DELAY', Delay(3),
+                             transitions={
+                                 'succeeded': 'PNAV'
+                             }
+                             )
             StateMachine.add('PNAV', ProximityNav(objective='discovery'),
                              transitions={
                                  'succeeded': 'GRIP',
@@ -611,7 +616,7 @@ def main():
             StateMachine.add('RELEASE', Grip(False),
                              # TODO: try backing up before attempting to re-grip
                              transitions={
-                                 'succeeded': 'PNAV',
+                                 'succeeded': 'DELAY',
                                  'preempted': 'RELEASE',
                                  'aborted': 'aborted'
                              }
