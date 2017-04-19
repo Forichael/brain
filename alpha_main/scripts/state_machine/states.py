@@ -624,7 +624,7 @@ def main():
                              )
 
         # TODO: Remove when not testing proximity nav
-        sm_dis.set_initial_state(['PNAV'])
+        sm_dis.set_initial_state(['RELEASE'])
 
         sm_del = StateMachine(
             outcomes=['succeeded', 'aborted'],
