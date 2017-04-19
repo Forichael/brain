@@ -97,7 +97,7 @@ class MissionSubscriber(object):
     def convert(self, msg):
         try:
             now = rospy.Time.now()
-            tf_listener.waitForTransform('map', msg.header.frame_id, now, rospy.Duration(1.0))
+            tf_listener.waitForTransform('map', msg.header.frame_id, msg.header.stamp, rospy.Duration(1.0))
             p = tf_listener.transformPoint("map", msg).point
             return p, True
         except (tf.Exception, tf.ExtrapolationException, tf.LookupException) as e:
@@ -116,6 +116,7 @@ class MissionSubscriber(object):
         self.onPt(msg, self.del_data)
 
     def onCan(self, msg):
+        self.can_data.points = {'x': [], 'y': []}
         self.onPt(msg, self.can_data)
 
     def dis_pt(self):
@@ -428,6 +429,181 @@ class Explore(State):
         return res
 
 
+class Explore_v2(State):
+    def __init__(self, objective, spacing=0.5):
+        # boundary is a floating point number of square side length,
+        # initial_point is a length-3 list
+        State.__init__(self,
+                       outcomes=['succeeded', 'discovered', 'aborted', 'stuck'],
+                       input_keys=['initial_point'],
+                       output_keys=['destination'])
+        self.stuck_timeout = 20.0
+        self.objective = objective
+        self.last_mv = rospy.Time.now()
+
+        self.spacing = spacing
+        self.num_points = 3
+
+        self.cmd_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+
+        self.client = SimpleActionClient('move_base', MoveBaseAction)
+        rospy.loginfo('Waiting for MOVE_BASE SERVER ...')
+        self.client.wait_for_server()
+        rospy.loginfo('MOVE_BASE SERVER IS UP!')
+
+    def onCmdVel(self, msg):
+        l = msg.linear
+        a = msg.angular
+        d = [l.x, l.y, l.z, a.x, a.y, a.z]
+        eps = 1e-6
+        for e in d:
+            if abs(e) > eps:
+                self.last_mv = rospy.Time.now()  # last movement
+
+    def subscribe(self):
+        self.cmd_sub = rospy.Subscriber('/cmd_vel', Twist, self.onCmdVel)
+
+    def unsubscribe(self):
+        if self.cmd_sub != None:
+            self.cmd_sub.unregister()
+            self.cmd_sub = None
+
+    def spin_circle(self):
+        rospy.loginfo('spinning')
+
+        # TODO: use odometry
+        speed = 0.5
+        startTime = rospy.Time.now()
+        r = rospy.Rate(10)
+        while (rospy.Time.now() - startTime).to_sec() < 2 * math.pi / speed:
+            if rospy.is_shutdown():
+                exit()
+
+            self.cmd_pub.publish(Twist(angular=Vector3(z=speed)))
+            r.sleep()
+
+        self.cmd_pub.publish(Twist())
+
+    def generate_points(self, userdata):
+        """
+        A python generator function to create a list of points to try visiting.
+        """
+        # TODO: generate along multiple axes
+        x, y, _ = userdata.initial_point
+        x, y = 0, 0
+
+        i = 0
+        for _ in range(self.num_points):
+            point = PointStamped()
+            point.header.frame_id = "map"
+            point.point.x = x + i * self.spacing
+            point.point.y = y
+            point.point.z = 0.0
+
+            i += 1
+
+            yield point
+
+    def go_to_point(self, point):
+        """
+        :type point: PointStamped
+        """
+        rospy.loginfo('Going to point {}'.format(point.point))
+
+        theta = 0
+
+        angle = Quaternion(0, 0, math.sin(theta / 2), math.cos(theta / 2))
+
+        dest = PoseStamped(
+            header=point.header,
+            pose=Pose(position=point.point, orientation=angle))
+
+        goal = MoveBaseGoal(target_pose=dest)
+
+        self.client.send_goal_and_wait(goal)
+
+    def execute_inner(self, userdata):
+        global ms
+        self.last_mv = rospy.Time.now()
+
+        rospy.loginfo('Beginning Exploration v2')
+        # self.spin_circle()
+
+        for point in self.generate_points(userdata):
+            self.go_to_point(point)
+            self.spin_circle()
+
+        return 'succeeded'
+
+        while True:
+
+            if rospy.is_shutdown():
+                exit()
+
+            if client.wait_for_result(rospy.Duration(0.3)):  # 0.3 sec. timeout to check for cans
+                # The exploration node has finished
+                res = client.get_state()
+                rospy.loginfo('EXPLORE SERVER STATE:{}'.format(res))
+                if res == 3:  ## SUCCEEDED
+                    # if exploration is complete...
+                    userdata.boundary += 1.0  # explore a larger area
+                    return 'succeeded'  # finished! yay!
+                else:
+                    print 'explore server failed : {}'.format(res)
+                    # when explore server gives up, can't explore
+                    return 'stuck'
+
+            now = rospy.Time.now()
+
+            if self.objective == 'discovery':
+                t = ms.dis_data.time
+                p = ms.dis_pt()
+            elif self.objective == 'delivery':
+                t = ms.del_data.time
+                p = ms.del_pt()
+            else:
+                rospy.logerr('Invalid objective passed to Explore state')
+                return 'aborted'
+
+            # if we're here, exploration is not complete yet...
+            if t != None:  # check initialized
+                dt = (now - t).to_sec()
+                discovered = (dt < 2.0)  # last seen within the last 2 seconds
+                if discovered:
+                    # if can was found ...
+                    client.cancel_all_goals()
+                    userdata.destination = p
+                    return 'discovered'
+
+            # more than 20 seconds have passed while completely still
+            # we're probably stuck
+            if (now - self.last_mv).to_sec() > self.stuck_timeout:
+                print 'haven\'t been moving for a while!'
+                client.cancel_all_goals()
+                return 'stuck'  # bad name... "stuck" would be better
+
+    def execute(self, userdata):
+        self.subscribe()
+
+        # select lidar data, depending on can
+        # rospy.loginfo('Selecting scan data ... ')
+        #
+        # rospy.wait_for_service('scan_select')
+        # scan_select = rospy.ServiceProxy('scan_select', MuxSelect)
+        # try:
+        # topic = 'scan_raw' if self.objective == 'discovery' else 'scan_filtered'
+        # mux_res = scan_select(topic=topic)
+        # except rospy.ServiceException as e:
+        #     print 'Failed to Select Scan : ' + str(e)
+        # return 'aborted'
+
+        # rospy.loginfo('Successfully Selected scan data!')
+
+        res = self.execute_inner(userdata)
+        self.unsubscribe()
+        return res
+
+
 def Grip(close=True):
     gripper_goal = GripGoal()
     gripper_goal.do_grip = close
@@ -437,7 +613,7 @@ def Grip(close=True):
 class ProximityNav(State):
     # TODO: make this faster
     # TODO: go the right distance to actually grab the can
-    def __init__(self, time=10, speed=0.2, kp=2.0, objective='discovery'):
+    def __init__(self, time=10, speed=0.25, kp=2.0, objective='discovery'):
         State.__init__(self, outcomes=['succeeded', 'lost'])
         self.timeout = rospy.Duration.from_sec(time)
         self.max_speed = speed
@@ -453,6 +629,8 @@ class ProximityNav(State):
         rospy.loginfo('Beginning drive to can')
         r = rospy.Rate(20)
 
+        last_far_can_time = rospy.Time.now()
+
         # Drive the robot
         while rospy.Time.now() - start_time < self.timeout and not rospy.is_shutdown():
 
@@ -464,29 +642,43 @@ class ProximityNav(State):
             elif self.objective == 'delivery':
                 dest = ms.del_pt()  # here, you can look for april tags
                 t = ms.del_data.time
+            else:
+                rospy.logerr('Invalid objective to ProximityNav')
+                return 'lost'
 
-            pt = PointStamped(header=Header(stamp=now, frame_id='map'), point=dest)
-            tf_listener.waitForTransform('map', 'base_link', now, rospy.Duration(4.0))
-            point = tf_listener.transformPoint("base_link", pt).point
+            map_pt = PointStamped(header=Header(stamp=rospy.Time(0), frame_id='map'), point=dest)
+            local_point = tf_listener.transformPoint('base_link', map_pt).point
 
-            dist = math.sqrt(point.x ** 2 + point.y ** 2)
-            angleError = math.atan2(point.y, point.x)
+            dist = math.sqrt(local_point.x ** 2 + local_point.y ** 2)
+            angle_error = math.atan2(local_point.y, local_point.x)
 
-            rospy.loginfo('Angle Error : {}; Distance : {}'.format(angleError, dist))
+            if dist > 0.6:
+                last_far_can_time = t
 
-            speed = 0.2 * dist  # assumedly, given dist<1.0, always under approx. 0.2m/s
+            rospy.loginfo('Angle Error : {}; Distance : {}'.format(angle_error, dist))
+
+            speed = 0.2 * dist + 0.05  # assumedly, given dist<1.0, always under approx. 0.2m/s
+
             if speed > self.max_speed:
                 speed = self.max_speed
 
-            turnPower = self.kp * angleError
-            self.pub.publish(Twist(linear=Vector3(x=speed), angular=Vector3(z=turnPower)))
+            turn_power = self.kp * angle_error
 
-            if (now - t).to_sec() > 1.0:
-                # I lost the can 1 second ago
-                if dist < 0.5:  # most likely, the can is too close to the robot so the camera cannot see
+            self.pub.publish(Twist(linear=Vector3(x=speed), angular=Vector3(z=turn_power)))
+
+            if (now - last_far_can_time).to_sec() > 2.0:
+                # I lost the can or have been close to it for one second
+                if dist < 0.6:  # most likely, the can is too close to the robot so the camera cannot see
+                    self.pub.publish(Twist())
                     return 'succeeded'
                 else:
+                    self.pub.publish(Twist())
                     return 'lost'
+
+            if dist < 0.2:
+                # I'm on top of the can
+                self.pub.publish(Twist())
+                return 'succeeded'
 
             r.sleep()
 
@@ -610,7 +802,7 @@ def main():
             StateMachine.add('GRIP', Grip(True),
                              transitions={
                                  # Change to "succeeded" when not testing just PNAV
-                                 'succeeded': 'aborted',  # start delivery
+                                 'succeeded': 'succeeded',  # start delivery
                                  'preempted': 'GRIP',
                                  'aborted': 'RELEASE'  # release before continuing nav
                              }
@@ -624,8 +816,18 @@ def main():
                              }
                              )
 
+            StateMachine.add('EXPLORE2', Explore_v2('discovery'),
+                             # TODO: try backing up before attempting to re-grip
+                             transitions={
+                                 'succeeded': 'aborted',
+                                 'stuck': 'aborted',
+                                 'discovered': 'aborted',
+                                 'aborted': 'aborted'
+                             }
+                             )
+
         # TODO: Remove when not testing proximity nav
-        sm_dis.set_initial_state(['RELEASE'])
+        # sm_dis.set_initial_state(['EXPLORE2'])
 
         sm_del = StateMachine(
             outcomes=['succeeded', 'aborted'],
