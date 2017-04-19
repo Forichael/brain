@@ -437,7 +437,7 @@ def Grip(close=True):
 class ProximityNav(State):
     # TODO: make this faster
     # TODO: go the right distance to actually grab the can
-    def __init__(self, time=6, speed=0.2, kp=2.0, objective='discovery'):
+    def __init__(self, time=10, speed=0.2, kp=2.0, objective='discovery'):
         State.__init__(self, outcomes=['succeeded', 'lost'])
         self.timeout = rospy.Duration.from_sec(time)
         self.max_speed = speed
@@ -482,6 +482,7 @@ class ProximityNav(State):
             self.pub.publish(Twist(linear=Vector3(x=speed), angular=Vector3(z=turnPower)))
 
             if (now - t).to_sec() > 1.0:
+                # I lost the can 1 second ago
                 if dist < 0.5:  # most likely, the can is too close to the robot so the camera cannot see
                     return 'succeeded'
                 else:
