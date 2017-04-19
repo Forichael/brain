@@ -755,7 +755,7 @@ def main():
             StateMachine.add('GRIP', Grip(True),
                              transitions={
                                  # Change to "succeeded" when not testing just PNAV
-                                 'succeeded': 'aborted',  # start delivery
+                                 'succeeded': 'succeeded',  # start delivery
                                  'preempted': 'GRIP',
                                  'aborted': 'RELEASE'  # release before continuing nav
                              }
@@ -769,8 +769,18 @@ def main():
                              }
                              )
 
+            StateMachine.add('EXPLORE2', Explore('discovery'),
+                             # TODO: try backing up before attempting to re-grip
+                             transitions={
+                                 'succeeded': 'aborted',
+                                 'stuck': 'aborted',
+                                 'discovered': 'aborted',
+                                 'aborted': 'aborted'
+                             }
+                             )
+
         # TODO: Remove when not testing proximity nav
-        sm_dis.set_initial_state(['RELEASE'])
+        sm_dis.set_initial_state(['EXPLORE2'])
 
         sm_del = StateMachine(
             outcomes=['succeeded', 'aborted'],
