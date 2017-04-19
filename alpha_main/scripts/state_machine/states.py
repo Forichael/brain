@@ -539,18 +539,18 @@ class Explore_v2(State):
         self.subscribe()
 
         # select lidar data, depending on can
-        rospy.loginfo('Selecting scan data ... ')
+        # rospy.loginfo('Selecting scan data ... ')
+        #
+        # rospy.wait_for_service('scan_select')
+        # scan_select = rospy.ServiceProxy('scan_select', MuxSelect)
+        # try:
+            # topic = 'scan_raw' if self.objective == 'discovery' else 'scan_filtered'
+            # mux_res = scan_select(topic=topic)
+        # except rospy.ServiceException as e:
+        #     print 'Failed to Select Scan : ' + str(e)
+            # return 'aborted'
 
-        rospy.wait_for_service('scan_select')
-        scan_select = rospy.ServiceProxy('scan_select', MuxSelect)
-        try:
-            topic = 'scan_raw' if self.objective == 'discovery' else 'scan_filtered'
-            mux_res = scan_select(topic=topic)
-        except rospy.ServiceException as e:
-            print 'Failed to Select Scan : ' + str(e)
-            return 'aborted'
-
-        rospy.loginfo('Successfully Selected scan data!')
+        # rospy.loginfo('Successfully Selected scan data!')
 
         res = self.execute_inner(userdata)
         self.unsubscribe()
