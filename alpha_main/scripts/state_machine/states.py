@@ -467,7 +467,7 @@ class ProximityNav(State):
 
             speed = 0.2 * dist  # assumedly, given dist<1.0, always under approx. 0.2m/s
             if speed > self.max_speed:
-                speed = max_speed
+                speed = self.max_speed
 
             turnPower = self.kp * angleError
             self.pub.publish(Twist(linear=Vector3(x=speed), angular=Vector3(z=turnPower)))
