@@ -116,6 +116,7 @@ class MissionSubscriber(object):
         self.onPt(msg, self.del_data)
 
     def onCan(self, msg):
+        self.can_data.points = {'x': [], 'y': []}
         self.onPt(msg, self.can_data)
 
     def dis_pt(self):
