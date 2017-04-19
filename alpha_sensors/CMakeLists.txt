@@ -109,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 
 catkin_package(
-  INCLUDE_DIRS include
+	#INCLUDE_DIRS include
   LIBRARIES alpha_laser_scan_filters
   CATKIN_DEPENDS roscpp
   DEPENDS
