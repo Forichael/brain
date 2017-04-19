@@ -121,28 +121,55 @@ while(True):
 		index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
 		search_params = dict(checks=50) #or pass empty dictionary
 		flann = cv2.FlannBasedMatcher(index_params,search_params)
-		print(des1)
-		print("----------")
-		print(des2)
-		matches = flann.knnMatch(des1, des2, k=2)
+		
+		# #print check
+		# print(des1)
+		# print("----------")
+		# print(des2)
 
-		#Only draw good matches, create mask
-		matchesMask = [[0,0] for i in xrange(len(matches))]
+		#Make sure that the descriptors are correct format for knnMatch
+		#checks the type of array, and recasts array as type float32 if not already
+		draw = False
+		MIN_MATCH = 5
+		try:
+		# if(type(des1) != type(None)):
+			if(des1.dtype != np.float32):
+				des1 = des1.astype(np.float32)
+		# if(type(des2) != type(None)):
+			if(des2.dtype != np.float32):
+				des2 = des2.astype(np.float32)
 
-		# ratio test as per Lowe's paper
-		for i,(m,n) in enumerate(matches):
-			if m.distance < 0.7*n.distance:
-				matchesMask[i]=[1,0]
+			matches = flann.knnMatch(des1, des2, k=2)
+
+			#Filter for good matches
+			good = []
+			dist = []
+			# ratio test as per Lowe's paper
+			for i,(m,n) in enumerate(matches):
+				if m.distance < 0.7*n.distance:
+					# matchesMask[i]=[1,0]
+					good.append(m)
+					dist.append(n)
+			
+			ratio = float(len(good)) / (len(kp1) + len(kp2))
+			found_match = (ratio > 0.025)
 				
-		draw_params = dict(matchColor = (0,255,0),
-				   singlePointColor = (255,0,0),
-				   matchesMask = matchesMask,
-				   flags = 0)
+			# Check that there are enough matches within reasonable distance
+			if(len(good)>=MIN_MATCH):
+				print(len(good))
+				draw = True
+				
+		except:
+			draw = False
+		
+		if draw:
+			img3 = drawMatches(gray1,kp1,gray2,kp2,good)
+		else:
+			good = []
+			img3 = drawMatches(gray1,kp1,gray2,kp2,good)
 
 		#Show Keypoints in common
 		cv2.imshow('frameKP', img3)
-		# cv2.imshow('frame',img2kp)
-		# cv2.imshow('reference', img1)
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			break
 
