@@ -55,7 +55,7 @@ class Page3(Page): #Arduino - Wheels
        rospy.Subscriber("/rwheel", Int16, self.wheels)
 
    def wheels(self, *args, **kwargs):
-        label = tk.Label(self, text= Int64) 
+        label = tk.Label(self, text= Int64()) 
         label.pack(side="top", fill="both", expand=True)
 
 
@@ -127,6 +127,21 @@ class Page6(Page):
        label = tk.Label(self, text="")
        label.pack(side="top", fill="both", expand=True)
        
+class Page7(Page): #Blink when we got the can
+    
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        self.label = tk.Label(self, text="WE GOT THE CAN!!!",font ="Times 80 bold", 
+                              background="red", foreground="green2")
+        self.label.pack(side="top", fill="both", expand=True, anchor=NW)
+        self.flash()
+
+    def flash(self):
+        bg = self.label.cget("background")
+        fg = self.label.cget("foreground")
+        self.label.configure(background=fg, foreground=bg)
+        self.after(700, self.flash)
+       
 class MainView(tk.Frame):
     def __init__(self, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
@@ -136,6 +151,7 @@ class MainView(tk.Frame):
         p4 = Page4(self)
         p5 = Page5(self)
         p6 = Page6(self)
+        p7 = Page7(self)
 
         buttonframe = tk.Frame(self)
         container = tk.Frame(self)
@@ -148,6 +164,7 @@ class MainView(tk.Frame):
         p4.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
         p5.place(in_=container, x=0, y=0, relwidth=1.5, relheight=1.75)
         p6.place(in_=container, x=0, y=0, relwidth=1.5, relheight=1.75)
+        p7.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
 
 #buttons
         b1 = tk.Button(buttonframe, text="LOCALIZATION", command=p1.lift)
@@ -156,6 +173,7 @@ class MainView(tk.Frame):
         b4 = tk.Button(buttonframe, text="LIDAR", command=p4.lift)
         b5 = tk.Button(buttonframe, text="STATUS CHECK", command=p5.lift)
         b6 = tk.Button(buttonframe, text="CLEAR", command=p6.lift)
+        b7 = tk.Button(buttonframe, text="BLINK", command=p7.lift)
 
         b1.pack(side=LEFT)
         b2.pack(side=LEFT)
@@ -163,8 +181,11 @@ class MainView(tk.Frame):
         b4.pack(side=LEFT)
         b5.pack(side=LEFT)
         b6.pack(side=LEFT)
+        b7.pack(side=LEFT)
 
         p1.show()
+        
+
 
         
 if __name__ == "__main__":
