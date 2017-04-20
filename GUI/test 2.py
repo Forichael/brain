@@ -16,6 +16,7 @@ class Page(tk.Frame):
     
     def __init__(self, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
+        
     def show(self):
         self.lift()
 
@@ -23,15 +24,14 @@ class Page1(Page):
         
    def __init__(self, *args, **kwargs):        
         Page.__init__(self, *args, **kwargs)
-        label = tk.Label(self, text='no message yet :(') 
+        label = tk.Label(self, text="Position of the Robot") 
         label.pack(side="top", fill="both", expand=True)
 
         # rospy.Subscriber(.....)
-        #rospy.Subscriber("/odometry/filtered", Odometry, self.__callback__)
+        rospy.Subscriber("/odometry/filtered", Odometry, self.Pos)
 
-   def __callback__(self, *args, **kwargs):
-        Page.__callback__(self, *args, **kwargs)
-        label = tk.Label(self, text= "we have message") 
+   def Pos(self, msg):
+        label = tk.Label(self, text= "message") 
         label.pack(side="top", fill="both", expand=True)
         
 
@@ -39,24 +39,22 @@ class Page2(Page):
     
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
-       label = tk.Label(self, text="Insert Navigations for Directions")
+       label = tk.Label(self, text="USB")
        label.pack(side="top", fill="both", expand=True)
        rospy.Subscriber("/imu/data", Imu, self.USB)
        
-   def __init__(self, *args, **kwargs):
-        Page.__init__(self, *args, **kwargs)
-        label = tk.Label(self, text= "we have message") 
+   def USB(self, *args, **kwargs):
+        label = tk.Label(self, text="message" ) 
         label.pack(side="top", fill="both", expand=True)
 
 class Page3(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
-       label = tk.Label(self, text="Insert Navigations for Locations")
+       label = tk.Label(self, text="Wheels")
        label.pack(side="top", fill="both", expand=True)
        rospy.Subscriber("/rwheel", Int16, self.wheels)
 
-   def __init__(self, *args, **kwargs):
-        Page.__init__(self, *args, **kwargs)
+   def wheels(self, *args, **kwargs):
         label = tk.Label(self, text= "we have message") 
         label.pack(side="top", fill="both", expand=True)
 
@@ -64,14 +62,13 @@ class Page3(Page):
 class Page4(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
-       label = tk.Label(self, text="Insert Navigations for Camera")
+       label = tk.Label(self, text="Lidar")
        label.pack(side="top", fill="both", expand=True)
        rospy.Subscriber("/scan", LaserScan, self.Lidar)
        
-   def __init__(self, *args, **kwargs):
-        Page.__init__(self, *args, **kwargs)
-        label = tk.Label(self, text= "we have message") 
-        label.pack(side="top", fill="both", expand=True)
+   def Lidar(self, *args, **kwargs):
+       label = tk.Label(self, text= "we have message") 
+       label.pack(side="top", fill="both", expand=True)
         
 class Page5(Page):
    def __init__(self, *args, **kwargs):
