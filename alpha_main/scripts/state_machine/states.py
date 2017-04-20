@@ -494,8 +494,11 @@ class Explore_v2(State):
         startTime = rospy.Time.now()
         r = rospy.Rate(20)
 
+        ## Invalidate old theta 
+        self.theta_t = None
+
         ## Wait until current orientation is known
-        while (self.theta_t is None) or (rospy.Time.now() - self.theta_t).to_sec() > 1.0:
+        while self.theta_t is None:
             r.sleep()
 
         # spin counterclockwise 180 deg.
@@ -856,17 +859,17 @@ def main():
                              }
                              )
 
-            StateMachine.add('EXPLORE2', Explore_v2('discovery'),
-                             # TODO: try backing up before attempting to re-grip
-                             transitions={
-                                 'succeeded': 'aborted',
-                                 'stuck': 'aborted',
-                                 'discovered': 'aborted',
-                                 'aborted': 'aborted'
-                             }
-                             )
+            #StateMachine.add('EXPLORE2', Explore_v2('discovery'),
+            #                 # TODO: try backing up before attempting to re-grip
+            #                 transitions={
+            #                     'succeeded': 'aborted',
+            #                     'stuck': 'aborted',
+            #                     'discovered': 'aborted',
+            #                     'aborted': 'aborted'
+            #                 }
+            #                 )
 
-        sm_dis.set_initial_state(['EXPLORE2'])
+        sm_dis.set_initial_state(['EXPLORE'])
 
         sm_del = StateMachine(
             outcomes=['succeeded', 'aborted'],
