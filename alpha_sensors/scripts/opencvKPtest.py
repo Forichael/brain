@@ -1,6 +1,7 @@
 #Figuring out Keypoints using OpenCV in python to be applied to can detection for alphabot 4.12.17
 import cv2
 import numpy as np
+import os
 
 # #ROS communication
 # import rospy
@@ -9,7 +10,7 @@ import numpy as np
 # from sensor_msgs.msg import Image
 
 
-# drawMatches() not defined until opencv3.0.0
+### drawMatches() not defined until opencv3.0.0
 def drawMatches(img1, kp1, img2, kp2, matches):
 	"""
 	http://stackoverflow.com/questions/20259025/module-object-has-no-attribute-drawmatches-opencv-python
@@ -81,61 +82,14 @@ def drawMatches(img1, kp1, img2, kp2, matches):
 	# cv2.destroyWindow('Matched Features')
 
 	# Also return the image if you'd like a copy
-	return out
+	return out	
 
-
-#Initialize training images
-img1 = cv2.imread('7up.png') 
-gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
-
-orb = cv2.ORB()
-kp1, des1 = orb.detectAndCompute(gray1, None)
-img1kp = cv2.drawKeypoints(gray1,kp1)
-
-######
-cap = cv2.VideoCapture(0)
-
-while(True):
-		#read the current frame from video
-		ret, frame = cap.read()
-
-		#modify frame and use ORB to ID Keypoints
-		gray2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		kp2, des2 = orb.detectAndCompute(gray2,None)
-		img2kp = cv2.drawKeypoints(gray2,kp2)
-
-		# # Brute-force matching using ORB descriptors
-		# # Following from Feature Matching pg on OpenCV:
-		# # create BFMatcher object
-		# bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-		# # Match descriptors.
-		# matches = bf.match(des1,des2)
-		# # Sort them in the order of their distance.
-		# matches = sorted(matches, key = lambda x:x.distance)
-		# # Draw first 20 matches.
-		# img3 = drawMatches(gray1,kp1,gray2,kp2,matches[:20])
-
-		#FLANN matching using ORB descriptors
-		#FLANN parameters
-		FLANN_INDEX_KDTREE = 0;
-		index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-		search_params = dict(checks=50) #or pass empty dictionary
-		flann = cv2.FlannBasedMatcher(index_params,search_params)
-		
-		# #print check
-		# print(des1)
-		# print("----------")
-		# print(des2)
-
+def isMatch(img1, des1, kp1, img2, des2, kp2):
 		#Make sure that the descriptors are correct format for knnMatch
 		#checks the type of array, and recasts array as type float32 if not already
-		draw = False
-		MIN_MATCH = 10
 		try:
-		# if(type(des1) != type(None)):
 			if(des1.dtype != np.float32):
 				des1 = des1.astype(np.float32)
-		# if(type(des2) != type(None)):
 			if(des2.dtype != np.float32):
 				des2 = des2.astype(np.float32)
 
@@ -147,26 +101,88 @@ while(True):
 			# ratio test as per Lowe's paper
 			for i,(m,n) in enumerate(matches):
 				if m.distance < 0.7*n.distance:
-					# matchesMask[i]=[1,0]
 					good.append(m)
-					dist.append(n)
-			
-			# Check that there are enough matches (add: within reasonable distance)
-			if(len(good)>=MIN_MATCH):
-				print(len(good))
-				draw = True
+					# dist.append(n)
+			return good, len(good)
 				
 		except:
-			draw = False
-		
-		if draw:
-			img3 = drawMatches(gray1,kp1,gray2,kp2,good)
-		else:
-			good = []
-			img3 = drawMatches(gray1,kp1,gray2,kp2,good)
+			return [], 0
+	
+### Setup
+#Initialize orb type descriptors
+orb = cv2.ORB()
+min_matches = 5 #minimum number of KP matches
+num_train = 11 #number of training images
+#FLANN matching using ORB descriptors
+#FLANN parameters
+FLANN_INDEX_KDTREE = 0;
+index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+search_params = dict(checks=50) #or pass empty dictionary
+flann = cv2.FlannBasedMatcher(index_params,search_params)
 
+#Initialize video frame source
+cap = cv2.VideoCapture(0)
+#operating software, open control line, enter string, read  and
+# return results, remove leading or trailing whitespace
+sensor_dir = os.popen('rospack find alpha_sensors').read().strip()
+#Initialize training images
+img_path = sensor_dir+'/data/7upCanCrop/'
+
+img_train = []
+kp_train = []
+des_train = []
+
+#fill the training lists using the training images
+for i in range(1,num_train+1):
+	# print(img_path+'7up'+ str(i) +'.jpg')
+	img =cv2.imread(img_path+'7up'+ str(i) +'.jpg')
+	# cv2.imshow('img',img)
+	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+	kp, des = orb.detectAndCompute(gray, None)
+
+	img_train.append(gray)
+	kp_train.append(kp)
+	des_train.append(des)
+	
+	# print(img_train)
+	# print('-------')
+	# print(des_train)
+	# cv2.imshow('Training Images', img_train[i-1])
+
+	counter = 0
+while(True):
+	counter=counter+1
+	if(counter==1000):
+		counter=0
+		#read the current frame from video
+		ret, frame = cap.read()
+		#modify frame and use ORB to ID Keypoints
+		gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+		kp_frame, des_frame = orb.detectAndCompute(gray_frame,None)
+
+		frame_matches = []
+		len_matches = []
+		for i in range(1,num_train+1):
+			good, len_good = isMatch(gray_frame, des_frame, kp_frame, \
+										img_train[i-1], des_train[i-1], kp_train[i-1])
+			frame_matches.append(good)
+			len_matches.append(len_good)
+		
+		#Show the training image with the most keypoint matches, if any above threshhold
+		index_best = len_matches.index(max(len_matches))
+
+		if (len_matches[index_best] >= min_matches):
+			# print('GOOD MATCH!!! :D')
+			# print(index_best,'---',len_matches[index_best])
+			match_best = drawMatches(gray_frame,kp_frame,img_train[index_best],\
+								kp_train[index_best],frame_matches[index_best])
+		else:
+			# print('no good match')
+			# print(index_best,'---',len_matches[index_best])
+			match_best = drawMatches(gray_frame,kp_frame,img_train[index_best],\
+								kp_train[index_best],[])
 		#Show Keypoints in common
-		cv2.imshow('frameKP', img3)
+		cv2.imshow('frameKP', match_best)
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			break
 
