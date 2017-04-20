@@ -29,8 +29,8 @@ RoboClaw roboclaw(&Serial2, 10000);
 /* ===== SETUP GRIPPER ===== */
 #define GRIPPER_PIN 11
 #define LIM_SW_PIN 22
-int Gripper::G_GRIP = 160;
-int Gripper::G_RELEASE = 90;
+int Gripper::G_GRIP = 75;
+int Gripper::G_RELEASE = 20;
 Gripper gripper(GRIPPER_PIN, LIM_SW_PIN, GRIPPER_LOOP_PERIOD);
 /* ========================= */
 
