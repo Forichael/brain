@@ -5,7 +5,10 @@ import tkMessageBox
 import Tkinter as tk
 import time
 import rospy
-from std_msgs.msg import String
+from std_msgs.msg import String, Int16
+from sensor_msgs.msg import LaserScan, Imu
+from nav_msgs.msg import Odometry
+
 
 rospy.init_node('GUI')
 
@@ -18,30 +21,58 @@ class Page(tk.Frame):
 
 class Page1(Page):
         
-    def __init__(self, *args, **kwargs):
+   def __init__(self, *args, **kwargs):        
         Page.__init__(self, *args, **kwargs)
-        label = tk.Label(self, text=time.time()) #How do I call function and print here? 
+        label = tk.Label(self, text='no message yet :(') 
         label.pack(side="top", fill="both", expand=True)
 
+        # rospy.Subscriber(.....)
+        #rospy.Subscriber("/odometry/filtered", Odometry, self.__callback__)
+
+   def __callback__(self, *args, **kwargs):
+        Page.__callback__(self, *args, **kwargs)
+        label = tk.Label(self, text= "we have message") 
+        label.pack(side="top", fill="both", expand=True)
+        
+
 class Page2(Page):
+    
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
        label = tk.Label(self, text="Insert Navigations for Directions")
        label.pack(side="top", fill="both", expand=True)
+       rospy.Subscriber("/imu/data", Imu, self.USB)
+       
+   def __init__(self, *args, **kwargs):
+        Page.__init__(self, *args, **kwargs)
+        label = tk.Label(self, text= "we have message") 
+        label.pack(side="top", fill="both", expand=True)
 
 class Page3(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
        label = tk.Label(self, text="Insert Navigations for Locations")
        label.pack(side="top", fill="both", expand=True)
+       rospy.Subscriber("/rwheel", Int16, self.wheels)
+
+   def __init__(self, *args, **kwargs):
+        Page.__init__(self, *args, **kwargs)
+        label = tk.Label(self, text= "we have message") 
+        label.pack(side="top", fill="both", expand=True)
+
 
 class Page4(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
        label = tk.Label(self, text="Insert Navigations for Camera")
        label.pack(side="top", fill="both", expand=True)
+       rospy.Subscriber("/scan", LaserScan, self.Lidar)
        
-
+   def __init__(self, *args, **kwargs):
+        Page.__init__(self, *args, **kwargs)
+        label = tk.Label(self, text= "we have message") 
+        label.pack(side="top", fill="both", expand=True)
+        
 class Page5(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
@@ -50,36 +81,50 @@ class Page5(Page):
        
        self.C = tk.Canvas(self, height=500, width=800, borderwidth=0, highlightthickness=0,)
        
-       #C.create_oval(10,10,110,110, fill='green2')
-       #C.create_text(60,60,fill="navy",text="Status1",font ="Times 20 bold")
+       
        self.C.create_oval(10,10,110,110, fill='red')
-       self.C.create_text(60,60,fill="navy",text="Status1",font ="Times 20 bold")
+       self.C.create_text(60,60,fill="navy",text="POSITION",font =("Times 20 bold",12))
 
-       self.C.create_oval(10,120,110,220, fill='green2')
-       self.C.create_text(60,170,fill="navy",text="Status2",font ="Times 20 bold")
-       #C.create_oval(10,120,110,220, fill='red')
-       #C.create_text(60,170,fill="navy",text="Status2",font ="Times 20 bold")
+       self.C.create_oval(10,120,110,220, fill='red')
+       self.C.create_text(60,170,fill="navy",text="USB",font =("Times 20 bold",12))
        
-       self.C.create_oval(10,230,110,330, fill='green2')
-       self.C.create_text(60,280,fill="navy",text="Status3",font ="Times 20 bold")
-       #C.create_oval(10,230,110,330, fill='red')
-       #C.create_text(60,280,fill="navy",text="Status3",font ="Times 20 bold")
+       self.C.create_oval(10,230,110,330, fill='red')
+       self.C.create_text(60,280,fill="navy",text="WHEELS",font =("Times 20 bold",12))
        
-       self.C.create_oval(10,340,110,440, fill='green2')
-       self.C.create_text(60,390,fill="navy",text="Status4",font ="Times 20 bold")
-       #C.create_oval(10,340,110,440, fill='red')
-       #C.create_text(60,390,fill="navy",text="Status4",font ="Times 20 bold")
+       self.C.create_oval(10,340,110,440, fill='red')
+       self.C.create_text(60,390,fill="navy",text="LIDAR",font =("Times 20 bold", 12))
 
        self.C.pack(side="left", fill = "both",expand =True)
-       rospy.Subscriber("test", String, self.USB)
        
+       rospy.Subscriber("/odometry/filtered", Odometry, self.Localization)
+       rospy.Subscriber("/imu/data", Imu, self.USB)
+       rospy.Subscriber("/rwheel", Int16, self.wheels) #/rhweel is the topic name
+       rospy.Subscriber("/scan", LaserScan, self.Lidar)
+       
+
+   def Localization(self, msg):
+       print "position"
+       self.C.create_oval(10,10,110,110, fill='green2')
+       self.C.create_text(60,60,fill="navy",text="POSITION",font =("Times 20 bold",12))
+  
 
    def USB(self, msg):
+       #msg.data
        print "We got data!"
-       self.C.create_oval(10,10,110,110, fill='green2')
-       self.C.create_text(60,60,fill="navy",text="Status1",font ="Times 20 bold")
-       
+       self.C.create_oval(10,120,110,220, fill='green2')
+       self.C.create_text(60,170,fill="navy",text="USB", font =("Times 20 bold",12))
 
+   def wheels(self, msg):
+       print "wheels!"
+       self.C.create_oval(10,230,110,330, fill='green2')
+       self.C.create_text(60,280,fill="navy",text="WHEELS",font =("Times 20 bold",12))
+     
+   def Lidar(self, msg):
+       print "lidar!"
+       self.C.create_oval(10,340,110,440, fill='green2')
+       self.C.create_text(60,390,fill="navy",text="LIDAR",font =("Times 20 bold",12))
+
+   
 class Page6(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
@@ -108,9 +153,9 @@ class MainView(tk.Frame):
         p5.place(in_=container, x=0, y=0, relwidth=1.5, relheight=1.5)
         p6.place(in_=container, x=0, y=0, relwidth=1.5, relheight=1.5)
 
-        b1 = tk.Button(buttonframe, text="Time", command=p1.lift)
+        b1 = tk.Button(buttonframe, text="POSITION", command=p1.lift)
         b2 = tk.Button(buttonframe, text="Directions", command=p2.lift)
-        b3 = tk.Button(buttonframe, text="Locations", command=p3.lift)
+        b3 = tk.Button(buttonframe, text="speed", command=p3.lift)
         b4 = tk.Button(buttonframe, text="Camera", command=p4.lift)
         b5 = tk.Button(buttonframe, text="status", command=p5.lift)
         b6 = tk.Button(buttonframe, text="Clear", command=p6.lift)
@@ -124,6 +169,7 @@ class MainView(tk.Frame):
 
         p1.show()
 
+        
 if __name__ == "__main__":
     root = tk.Tk()
     main = MainView(root)

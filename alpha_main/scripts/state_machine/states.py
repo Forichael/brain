@@ -191,7 +191,7 @@ class Navigate(State):
                 return 'lost'  # lost can from sight somehow
 
             dist = self.destination.x ** 2 + self.destination.y ** 2
-            if dist < 2.0:  # within 4 meters from can
+            if dist < 1.5**2:  # within 1.5 meters from can
                 client.cancel_all_goals()  # start manual drive!
                 return 'succeeded'
 
@@ -679,17 +679,22 @@ class ProximityNav(State):
         rospy.loginfo('Beginning drive to can')
         r = rospy.Rate(20)
 
+        last_far_can_time = rospy.Time.now()
+
         # Drive the robot
+        stop = Twist()
+        phase = 'TURN' # 'TURN' or 'APPROACH'
+
         while rospy.Time.now() - start_time < self.timeout and not rospy.is_shutdown():
 
             now = rospy.Time.now()
 
             if self.objective == 'discovery':
                 dest = ms.can_pt()  # look for cans, NOT april tags!
-                last_can_t = ms.can_data.time
+                t = ms.can_data.time
             elif self.objective == 'delivery':
                 dest = ms.del_pt()  # here, you can look for april tags
-                last_can_t = ms.del_data.time
+                t = ms.del_data.time
             else:
                 rospy.logerr('Invalid objective to ProximityNav')
                 return 'lost'
@@ -700,6 +705,9 @@ class ProximityNav(State):
             dist = math.sqrt(local_point.x ** 2 + local_point.y ** 2)
             angle_error = math.atan2(local_point.y, local_point.x)
 
+            if dist > 0.6:
+                last_far_can_time = t
+
             rospy.loginfo('Angle Error : {}; Distance : {}'.format(angle_error, dist))
 
             speed = 0.2 * dist + 0.05  # assumedly, given dist<1.0, always under approx. 0.2m/s
@@ -707,23 +715,37 @@ class ProximityNav(State):
             if speed > self.max_speed:
                 speed = self.max_speed
 
+            if abs(angle_error) < 0.08: # 5 deg.
+                phase = 'APPROACH'
+
+            if phase is 'TURN': # Don't move forwards until can is reasonably centered
+                speed = 0.0
+
+            if dist < 0.3: # reduce speed by half, if too close
+                speed *= 0.5
+
             turn_power = self.kp * angle_error
 
             self.pub.publish(Twist(linear=Vector3(x=speed), angular=Vector3(z=turn_power)))
 
-            if (now - last_can_t).to_sec() > 2.0:
-                self.pub.publish(Twist())
-                return 'lost'
+            if (now - last_far_can_time).to_sec() > 2.0:
+                # I lost the can or have been close to it for one second
+                if dist < 0.6:  # most likely, the can is too close to the robot so the camera cannot see
+                    self.pub.publish(stop)
+                    return 'succeeded'
+                else:
+                    self.pub.publish(stop)
+                    return 'lost'
 
-            if self.inductive:
-                # I'm in contact with the can!
-                self.pub.publish(Twist())
+            if dist < 0.2 or self.inductive:
+                # I'm on top of the can
+                self.pub.publish(stop)
                 return 'succeeded'
 
             r.sleep()
 
         # Stop the robot
-        self.pub.publish(Twist())
+        self.pub.publish(stop)
         rospy.loginfo('Finished drive')
         return 'succeeded'
 
