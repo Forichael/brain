@@ -3,7 +3,7 @@ import math
 import rospy
 import numpy as np
 from geometry_msgs.msg import PoseStamped, PolygonStamped, PointStamped, Pose, Quaternion, Point, Twist, Vector3
-from std_msgs.msg import Header
+from std_msgs.msg import Header, Bool
 from smach import *
 from smach_ros import *
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -664,6 +664,12 @@ class ProximityNav(State):
         self.angleError = 0
         self.kp = kp
         self.objective = objective
+        self.inductive = False
+
+        rospy.Subscriber('/inductive', Bool, self.on_inductive)
+
+    def on_inductive(self, msg):
+        self.inductive = msg.data
 
     def execute(self, userdata):
         global ms
@@ -672,8 +678,6 @@ class ProximityNav(State):
         rospy.loginfo('Beginning drive to can')
         r = rospy.Rate(20)
 
-        last_far_can_time = rospy.Time.now()
-
         # Drive the robot
         while rospy.Time.now() - start_time < self.timeout and not rospy.is_shutdown():
 
@@ -681,10 +685,10 @@ class ProximityNav(State):
 
             if self.objective == 'discovery':
                 dest = ms.can_pt()  # look for cans, NOT april tags!
-                t = ms.can_data.time
+                last_can_t = ms.can_data.time
             elif self.objective == 'delivery':
                 dest = ms.del_pt()  # here, you can look for april tags
-                t = ms.del_data.time
+                last_can_t = ms.del_data.time
             else:
                 rospy.logerr('Invalid objective to ProximityNav')
                 return 'lost'
@@ -694,9 +698,6 @@ class ProximityNav(State):
 
             dist = math.sqrt(local_point.x ** 2 + local_point.y ** 2)
             angle_error = math.atan2(local_point.y, local_point.x)
-
-            if dist > 0.6:
-                last_far_can_time = t
 
             rospy.loginfo('Angle Error : {}; Distance : {}'.format(angle_error, dist))
 
@@ -709,17 +710,12 @@ class ProximityNav(State):
 
             self.pub.publish(Twist(linear=Vector3(x=speed), angular=Vector3(z=turn_power)))
 
-            if (now - last_far_can_time).to_sec() > 2.0:
-                # I lost the can or have been close to it for one second
-                if dist < 0.6:  # most likely, the can is too close to the robot so the camera cannot see
-                    self.pub.publish(Twist())
-                    return 'succeeded'
-                else:
-                    self.pub.publish(Twist())
-                    return 'lost'
+            if (now - last_can_t).to_sec() > 2.0:
+                self.pub.publish(Twist())
+                return 'lost'
 
-            if dist < 0.2:
-                # I'm on top of the can
+            if self.inductive:
+                # I'm in contact with the can!
                 self.pub.publish(Twist())
                 return 'succeeded'
 
