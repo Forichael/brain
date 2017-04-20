@@ -87,13 +87,14 @@ class MissionSubscriber(object):
     """
 
     def __init__(self):
-        self.dis_sub = rospy.Subscriber('/dis_pt', PointStamped, self.onDis)
-        self.del_sub = rospy.Subscriber('/del_pt', PointStamped, self.onDel)
-        self.can_sub = rospy.Subscriber('/can_point', PointStamped, self.onCan)
 
         self.dis_data = PointData('dis')
         self.del_data = PointData('del')
         self.can_data = PointData('can')
+        self.dis_sub = rospy.Subscriber('/dis_pt', PointStamped, self.onDis)
+        self.del_sub = rospy.Subscriber('/del_pt', PointStamped, self.onDel)
+        self.can_sub = rospy.Subscriber('/can_point', PointStamped, self.onCan)
+
 
     def convert(self, msg):
         try:
