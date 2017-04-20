@@ -170,9 +170,13 @@ class Navigate(State):
         client.wait_for_server()
         rospy.loginfo('MOVE_BASE SERVER IS UP!')
 
+        goal = self.make_goal()
+        client.send_goal(goal) # don't continuously update goals
+
         while True:
-            goal = self.make_goal()
-            client.send_goal_and_wait(goal, execute_timeout=rospy.Duration(5.0))  # wait 10 sec. until completion
+            client.wait_for_result(rospy.Duration(1.0)) # wait 1 sec.
+            #client.send_goal_and_wait(goal, execute_timeout=rospy.Duration(5.0))  # wait 10 sec. until completion
+            res = client.get_state()
             now = rospy.Time.now()
 
             ### FOR LATER, SET INITIAL POINT OF SEARCH ###
@@ -185,13 +189,13 @@ class Navigate(State):
             if p.x != 0 and p.y != 0:
                 userdata.initial_point = [p.x, p.y, p.z]
 
-            if (now - t).to_sec() > 5.0:
-                # more than 5 seconds have passed since sight of can
+            if (now - t).to_sec() > 20.0:
+                # more than 20 seconds have passed since sight of can
                 client.cancel_all_goals()
                 return 'lost'  # lost can from sight somehow
 
             dist = self.destination.x ** 2 + self.destination.y ** 2
-            if dist < 1.5**2:  # within 1.5 meters from can
+            if res == 3: #move_base success
                 client.cancel_all_goals()  # start manual drive!
                 return 'succeeded'
 
