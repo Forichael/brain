@@ -190,7 +190,7 @@ class Navigate(State):
                 return 'lost'  # lost can from sight somehow
 
             dist = self.destination.x ** 2 + self.destination.y ** 2
-            if dist < 2.5**2:  # within 4 meters from can
+            if dist < 1.5**2:  # within 1.5 meters from can
                 client.cancel_all_goals()  # start manual drive!
                 return 'succeeded'
 
@@ -218,7 +218,7 @@ class Navigate(State):
         x, y = self.destination.x, self.destination.y
         theta = math.atan2(y, x)
 
-        r = 2.0  # 1m back from target position
+        r = 1.0  # 1m back from target position
         x -= r * math.cos(theta)
         y -= r * math.sin(theta)
 
@@ -681,6 +681,9 @@ class ProximityNav(State):
         last_far_can_time = rospy.Time.now()
 
         # Drive the robot
+        stop = Twist()
+        phase = 'TURN' # 'TURN' or 'APPROACH'
+
         while rospy.Time.now() - start_time < self.timeout and not rospy.is_shutdown():
 
             now = rospy.Time.now()
@@ -711,6 +714,15 @@ class ProximityNav(State):
             if speed > self.max_speed:
                 speed = self.max_speed
 
+            if abs(angle_error) < 0.08: # 5 deg.
+                phase = 'APPROACH'
+
+            if phase is 'TURN': # Don't move forwards until can is reasonably centered
+                speed = 0.0
+
+            if dist < 0.3: # reduce speed by half, if too close
+                speed *= 0.5
+
             turn_power = self.kp * angle_error
 
             self.pub.publish(Twist(linear=Vector3(x=speed), angular=Vector3(z=turn_power)))
@@ -718,21 +730,21 @@ class ProximityNav(State):
             if (now - last_far_can_time).to_sec() > 2.0:
                 # I lost the can or have been close to it for one second
                 if dist < 0.6:  # most likely, the can is too close to the robot so the camera cannot see
-                    self.pub.publish(Twist())
+                    self.pub.publish(stop)
                     return 'succeeded'
                 else:
-                    self.pub.publish(Twist())
+                    self.pub.publish(stop)
                     return 'lost'
 
             if dist < 0.2 or self.inductive:
                 # I'm on top of the can
-                self.pub.publish(Twist())
+                self.pub.publish(stop)
                 return 'succeeded'
 
             r.sleep()
 
         # Stop the robot
-        self.pub.publish(Twist())
+        self.pub.publish(stop)
         rospy.loginfo('Finished drive')
         return 'succeeded'
 
