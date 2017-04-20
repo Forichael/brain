@@ -130,7 +130,7 @@ while(True):
 		#Make sure that the descriptors are correct format for knnMatch
 		#checks the type of array, and recasts array as type float32 if not already
 		draw = False
-		MIN_MATCH = 5
+		MIN_MATCH = 10
 		try:
 		# if(type(des1) != type(None)):
 			if(des1.dtype != np.float32):
@@ -151,10 +151,7 @@ while(True):
 					good.append(m)
 					dist.append(n)
 			
-			ratio = float(len(good)) / (len(kp1) + len(kp2))
-			found_match = (ratio > 0.025)
-				
-			# Check that there are enough matches within reasonable distance
+			# Check that there are enough matches (add: within reasonable distance)
 			if(len(good)>=MIN_MATCH):
 				print(len(good))
 				draw = True
