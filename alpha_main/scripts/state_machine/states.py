@@ -8,6 +8,7 @@ from smach import *
 from smach_ros import *
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from alpha_action.msg import GripAction, GripGoal
+from nav_msgs.msg import Odometry
 from frontier_exploration.msg import ExploreTaskAction, ExploreTaskActionGoal, ExploreTaskGoal
 from actionlib import SimpleActionClient
 from topic_tools.srv import MuxSelect
@@ -451,6 +452,9 @@ class Explore_v2(State):
         self.client.wait_for_server()
         rospy.loginfo('MOVE_BASE SERVER IS UP!')
 
+        self.theta = None
+        self.theta_t = None
+
     def onCmdVel(self, msg):
         l = msg.linear
         a = msg.angular
@@ -460,13 +464,27 @@ class Explore_v2(State):
             if abs(e) > eps:
                 self.last_mv = rospy.Time.now()  # last movement
 
+    def onOdom(self, msg):
+        q = msg.pose.pose.orientation
+        #t =  msg.header.stamp
+        # q.z == sin(theta/2)
+        # q.w == cos(theta/2)
+        self.theta = 2 * math.atan2(q.w, q.z)
+        self.theta_t = msg.header.stamp
+
     def subscribe(self):
         self.cmd_sub = rospy.Subscriber('/cmd_vel', Twist, self.onCmdVel)
+        self.odom_sub = rospy.Subscriber('/odometry/filtered/local', Odometry, self.onOdom)
 
     def unsubscribe(self):
+
         if self.cmd_sub != None:
             self.cmd_sub.unregister()
             self.cmd_sub = None
+
+        if self.odom_sub != None:
+            self.odom_sub.unregister()
+            self.odom_sub = None
 
     def spin_circle(self):
         rospy.loginfo('spinning')
@@ -474,13 +492,35 @@ class Explore_v2(State):
         # TODO: use odometry
         speed = 0.5
         startTime = rospy.Time.now()
-        r = rospy.Rate(10)
-        while (rospy.Time.now() - startTime).to_sec() < 2 * math.pi / speed:
-            if rospy.is_shutdown():
-                exit()
+        r = rospy.Rate(20)
 
-            self.cmd_pub.publish(Twist(angular=Vector3(z=speed)))
+        ## Wait until current orientation is known
+        while (self.theta_t is None) or (rospy.Time.now() - self.theta_t).to_sec() > 1.0:
             r.sleep()
+
+        # spin counterclockwise 180 deg.
+        def spin_half(self):
+            start_angle = self.theta
+            end_angle = start_angle + math.pi # normalized to 0 ~ 2*pi
+            while not rospy.is_shutdown():
+                t1 = self.theta % (2 * math.pi)
+                delta_angle = (end_angle - self.theta + math.pi) % (2 * math.pi) - math.pi
+                # delta_angle from -pi ~ pi
+                if abs(delta_angle) < 0.08: # ~5 deg. tolerance
+                    break
+                self.cmd_pub.publish(Twist(angular=Vector3(z=speed)))
+                r.sleep()
+
+        spin_half(self)
+        # assert abs(self.theta - start_angle) < eps
+        spin_half(self)
+
+        #while (rospy.Time.now() - startTime).to_sec() < 2 * math.pi / speed:
+        #    if rospy.is_shutdown():
+        #        exit()
+
+        #    self.cmd_pub.publish(Twist(angular=Vector3(z=speed)))
+        #    r.sleep()
 
         self.cmd_pub.publish(Twist())
 
@@ -826,8 +866,7 @@ def main():
                              }
                              )
 
-        # TODO: Remove when not testing proximity nav
-        # sm_dis.set_initial_state(['EXPLORE2'])
+        sm_dis.set_initial_state(['EXPLORE2'])
 
         sm_del = StateMachine(
             outcomes=['succeeded', 'aborted'],
