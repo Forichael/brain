@@ -190,7 +190,7 @@ class Navigate(State):
                 return 'lost'  # lost can from sight somehow
 
             dist = self.destination.x ** 2 + self.destination.y ** 2
-            if dist < 2.0:  # within 4 meters from can
+            if dist < 2.5**2:  # within 4 meters from can
                 client.cancel_all_goals()  # start manual drive!
                 return 'succeeded'
 
@@ -218,7 +218,7 @@ class Navigate(State):
         x, y = self.destination.x, self.destination.y
         theta = math.atan2(y, x)
 
-        r = 1.0  # 1m back from target position
+        r = 2.0  # 1m back from target position
         x -= r * math.cos(theta)
         y -= r * math.sin(theta)
 
