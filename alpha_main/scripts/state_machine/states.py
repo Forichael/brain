@@ -3,7 +3,7 @@ import math
 import rospy
 import numpy as np
 from geometry_msgs.msg import PoseStamped, PolygonStamped, PointStamped, Pose, Quaternion, Point, Twist, Vector3
-from std_msgs.msg import Header
+from std_msgs.msg import Header, Bool
 from smach import *
 from smach_ros import *
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -664,6 +664,12 @@ class ProximityNav(State):
         self.angleError = 0
         self.kp = kp
         self.objective = objective
+        self.inductive = False
+
+        rospy.Subscriber('/inductive', Bool, self.on_inductive)
+
+    def on_inductive(self, msg):
+        self.inductive = msg.data
 
     def execute(self, userdata):
         global ms
