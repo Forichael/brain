@@ -6,7 +6,7 @@ extern const int INDUCTIVE_LOOP_PERIOD;
 void handleInductive(ros::NodeHandle& nh);
 
 std_msgs::Bool inductive_msg;
-ros::Publisher pub_inductive( "/Inductive", &inductive_msg);
+ros::Publisher pub_inductive( "/inductive", &inductive_msg);
 
 void setupInductiveSensor(ros::NodeHandle& nh){ 
   pinMode(inductivePin, INPUT);  
