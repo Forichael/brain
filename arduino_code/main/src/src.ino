@@ -5,6 +5,7 @@
 #include <std_msgs/Int16.h>
 #include "encoders.h"
 #include "distanceSensors.h"
+#include "inductiveSensor.h"
 //#include "motor.h"
 #include "RoboClaw.h"
 #include <Servo.h> // needs to be included before gipper.h
@@ -18,6 +19,7 @@
 ros::NodeHandle nh;
 const int ODOM_LOOP_PERIOD = 20;
 const int DISTANCE_LOOP_PERIOD = 100;
+const int INDUCTIVE_LOOP_PERIOD = 100;
 const int GRIPPER_LOOP_PERIOD= 50;
 /* ===================== */
 
@@ -110,6 +112,7 @@ void setup()
 
 	setupEncoders(nh);
 	setupDistanceSensors(nh, "l_ir","r_ir","ultrasound");
+  setupInductiveSensor(nh);
 	gripper.setup(nh);
 
 	l_pid.SetMode(AUTOMATIC);
@@ -140,5 +143,6 @@ void loop()
 
 	loopEncoders();
 	loopDistanceSensors(nh); // 100 m period
+  loopInductiveSensor(nh);
 	gripper.loop(); // 50 ms period
 }
