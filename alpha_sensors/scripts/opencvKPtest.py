@@ -3,13 +3,6 @@ import cv2
 import numpy as np
 import os
 
-# #ROS communication
-# import rospy
-# import tf
-# import roslib
-# from sensor_msgs.msg import Image
-
-
 ### drawMatches() not defined until opencv3.0.0
 def drawMatches(img1, kp1, img2, kp2, matches):
 	"""
@@ -46,10 +39,10 @@ def drawMatches(img1, kp1, img2, kp2, matches):
 	out = np.zeros((max([rows1,rows2]),cols1+cols2,3), dtype='uint8')
 
 	# Place the first image to the left
-	out[:rows1,:cols1] = np.dstack([img1, img1, img1])
+	out[:rows1,:cols1] = img1#np.dstack([img1, img1, img1])
 
 	# Place the next image to the right of it
-	out[:rows2,cols1:] = np.dstack([img2, img2, img2])
+	out[:rows2,cols1:] = img2#np.dstack([img2, img2, img2])
 
 	# For each pair of points we have between both images
 	# draw circles, then connect a line between them
@@ -107,13 +100,66 @@ def isMatch(img1, des1, kp1, img2, des2, kp2):
 				
 		except:
 			return [], 0
+
+def isColor(image):
+	#convert image into HSV, blur it
+	imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+	imageHSV = cv2.GaussianBlur(imageHSV, (5, 5), 0)
+	#declare bounds for target pixel range
+	lower_HSV = np.array([70, 100, 10])
+	higher_HSV = np.array([100, 255, 255])
+	#show colored pixels in range
+	colorPixels = cv2.inRange(imageHSV, lower_HSV, higher_HSV)
+
+	(cnts,_) = cv2.findContours(colorPixels.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	# try: 
+	# 	#cv2.contourArea unit: pixel
+	# 	colorContour = max(cnts, key = cv2.contourArea) 	
+	# except:
+	# 	#make a filterable exception
+	# 	return [0,0]
+
+	# if (cv2.contourArea(colorContour) > 200):
+	# 		#( center (x,y), (width, height), angle of rotation )
+	# 		return [cv2.minAreaRect(colorContour), colorPixels]
+	# else:
+	# 	return [0,0]
+	cntsBig = []
+	for cnt in cnts:
+		if cv2.contourArea(cnt)>100:
+			cntsBig.append(cnt)
+	if len(cntsBig)>0:
+		return True, cnts
+	else:
+		return False, [0,0]
+
+def isROI(contours, frame):
+	cnts_ROI=[]
+	cnts_minRect=[]
+	cnts_kp_ROI=[]
+	cnts_des_ROI=[]
+	#pulls out regions of interest for Keypoint detection
+	for cnt in contours:
+		minRect = cv2.minAreaRect(cnt)
+		ptCen, dim,_ = minRect
+		x, y = ptCen
+		w, h = dim
+		ROI = frame[x-w/2:x+w/2,y-h/2:y+h/2]#region of interest
+		#modify frame and use ORB to ID Keypoints
+		kp_ROI, des_ROI = orb.detectAndCompute(ROI,None)
+
+		cnts_ROI.append(ROI)
+		cnts_minRect.append(minRect)
+		cnts_kp_ROI.append(kp_ROI)
+		cnts_des_ROI.append(des_ROI)
+
+	return cnts_ROI, cnts_minRect, cnts_kp_ROI, cnts_des_ROI
 	
-### Setup
+########### Setup ###########
 #Initialize orb type descriptors
 orb = cv2.ORB()
 min_matches = 5 #minimum number of KP matches
 num_train = 11 #number of training images
-#FLANN matching using ORB descriptors
 #FLANN parameters
 FLANN_INDEX_KDTREE = 0;
 index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
@@ -122,7 +168,7 @@ flann = cv2.FlannBasedMatcher(index_params,search_params)
 
 #Initialize video frame source
 cap = cv2.VideoCapture(0)
-#operating software, open control line, enter string, read  and
+#operating software, open control line, enter string, read and
 # return results, remove leading or trailing whitespace
 sensor_dir = os.popen('rospack find alpha_sensors').read().strip()
 #Initialize training images
@@ -135,56 +181,73 @@ des_train = []
 #fill the training lists using the training images
 for i in range(1,num_train+1):
 	# print(img_path+'7up'+ str(i) +'.jpg')
-	img =cv2.imread(img_path+'7up'+ str(i) +'.jpg')
-	# cv2.imshow('img',img)
-	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-	kp, des = orb.detectAndCompute(gray, None)
+	img = cv2.imread(img_path+'7up'+ str(i) +'.jpg')
+	img = cv2.resize(img,dsize=(0,0), fx=0.35, fy=0.35) #make img smaller
 
-	img_train.append(gray)
-	kp_train.append(kp)
-	des_train.append(des)
-	
-	# print(img_train)
-	# print('-------')
-	# print(des_train)
-	# cv2.imshow('Training Images', img_train[i-1])
+	if img is not None:
+		kp, des = orb.detectAndCompute(img, None)
 
-	counter = 0
+		img_train.append(img)
+		kp_train.append(kp)
+		des_train.append(des)
+
 while(True):
-	counter=counter+1
-	if(counter==1000):
-		counter=0
 		#read the current frame from video
 		ret, frame = cap.read()
-		#modify frame and use ORB to ID Keypoints
-		gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		kp_frame, des_frame = orb.detectAndCompute(gray_frame,None)
-
-		frame_matches = []
-		len_matches = []
-		for i in range(1,num_train+1):
-			good, len_good = isMatch(gray_frame, des_frame, kp_frame, \
-										img_train[i-1], des_train[i-1], kp_train[i-1])
-			frame_matches.append(good)
-			len_matches.append(len_good)
+		#Use HSV filter to see if there is anything the color of can
+		colorBool, contours = isColor(frame)#colorBool, minRect, colorPixels = isColor(frame)
 		
-		#Show the training image with the most keypoint matches, if any above threshhold
-		index_best = len_matches.index(max(len_matches))
+		# colorBool=False
+		if colorBool and len(contours)>0:
+			#check colored contours for Keypoints, return one with most
+			cnts_ROI, cnts_minRect, cnts_kp_ROI, cnts_des_ROI = isROI(contours, frame) 
 
-		if (len_matches[index_best] >= min_matches):
-			# print('GOOD MATCH!!! :D')
-			# print(index_best,'---',len_matches[index_best])
-			match_best = drawMatches(gray_frame,kp_frame,img_train[index_best],\
-								kp_train[index_best],frame_matches[index_best])
+			record_best = []
+			for r in range(1, len(cnts_ROI)+1):
+				frame_matches = []
+				len_matches = []
+				for t in range(1,num_train+1):
+					good, len_good = isMatch(cnts_ROI[r-1], cnts_des_ROI[r-1], cnts_kp_ROI[r-1], \
+											img_train[t-1], des_train[t-1], kp_train[t-1])
+					frame_matches.append(good)
+					len_matches.append(len_good)
+
+				#Show the training image with the most keypoint matches, if any above threshhold
+				index_best = len_matches.index(max(len_matches))
+				record_best.append([r-1, index_best, frame_matches[index_best], len_matches[index_best]])
+
+			#index of best contour (most KP matches)
+			cnt_best = record_best.index(max(record_best[:,3])) 
+			r_index, t_index, matches, num_matches = record_best[cnt_best]
+			
+			print(num_matches)
+			box = np.int0(cv2.cv.BoxPoints(cnts_minRect[r_index]))
+			cv2.drawContours(frame, [box], -1, (0, 255, 0), 2)
+
+			cv2.imshow('frameKP', frame)
+			if cv2.waitKey(1) & 0xFF == ord('q'):
+				break
+
+			# if (len_matches[index_best] >= min_matches):
+			# 	# print('GOOD MATCH!!! :D')
+			# 	# print(index_best,'---',len_matches[index_best])
+			# 	match_best = drawMatches(frame,kp_frame,img_train[index_best],\
+			# 						kp_train[index_best],frame_matches[index_best])
+			# else:
+			# 	# print('no good match')
+			# 	# print(index_best,'---',len_matches[index_best])
+			# 	match_best = drawMatches(frame,kp_frame,img_train[index_best],\
+			# 						kp_train[index_best],[])
+			# #Show Keypoints in common
+			# cv2.imshow('frameKP', match_best)
+			# if cv2.waitKey(1) & 0xFF == ord('q'):
+			# break
+
 		else:
-			# print('no good match')
-			# print(index_best,'---',len_matches[index_best])
-			match_best = drawMatches(gray_frame,kp_frame,img_train[index_best],\
-								kp_train[index_best],[])
-		#Show Keypoints in common
-		cv2.imshow('frameKP', match_best)
-		if cv2.waitKey(1) & 0xFF == ord('q'):
-			break
+			cv2.imshow('frameKP', frame)
+			if cv2.waitKey(1) & 0xFF == ord('q'):
+				break
+
 
 # When everything done, release the capture
 cap.release()
