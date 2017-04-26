@@ -1,31 +1,17 @@
-#!/usr/bin/python
+#Human visualization of contour and keypoints that alphabot sees
 
 # import the necessary packages
 import numpy as np
 import cv2
 import os
 
-#ROS communication
-import rospy
-import tf
-import roslib
-
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
-from geometry_msgs.msg import Point, PointStamped
-#include import msg type for whatever KP and images are getting published as
-
-def distance_to_camera(knownHeight, focalLength, perHeight):
-    # compute and return the distance from the maker to the camera
-        return (knownHeight * focalLength) / perHeight
-
 def find_marker(image):
     #convert image into HSV, blur it
     imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     imageHSV = cv2.GaussianBlur(imageHSV, (9, 9), 0)
     #declare bounds for target pixel range
-    lower_HSV = np.array([50, 50, 0]) #([70, 100, 10])  ###Outdoor/indoor 7up can
-    higher_HSV = np.array([80, 255, 255]) #([100, 255, 255])
+    lower_HSV = np.array([55, 100, 0]) #([70, 100, 10])  ###Outdoor/indoor 7up can
+    higher_HSV = np.array([70, 255, 255]) #([100, 255, 255])
     #show color pixels in range
     colorPixels = cv2.inRange(imageHSV, lower_HSV, higher_HSV)
 
@@ -34,11 +20,12 @@ def find_marker(image):
         #cv2.contourArea unit: pixel
         colorContour = max(cnts, key = cv2.contourArea)     
         if (cv2.contourArea(colorContour) > 100):
-            print "Can color found"
+            # print "Can color found"
+            # print(cv2.boundingRect(colorContour))
             return cv2.boundingRect(colorContour), colorPixels
             #return cv2.minAreaRect(colorContour), colorPixels
         else:
-            print "No can color found (too small)"
+            # print "No can color found (too small)"
             return 0,0
     except:
         #make a filterable exception
@@ -68,22 +55,81 @@ def find_KPmatches(img1, des1, kp1, img2, des2, kp2):
                 
         except:
             return [], 0
+### drawMatches() not defined until opencv3.0.0
+def drawMatches(img1, kp1, img2, kp2, matches):
+    """
+    http://stackoverflow.com/questions/20259025/module-object-has-no-attribute-drawmatches-opencv-python
 
-def calibrate_camera(knownDistance, knownHeight, knownImage): #maybe dont have this in
-    marker,_ = find_marker(cv2.imread(knownImage))
-    focalLength = marker[0][1] * KNOWN_DISTANCE / KNOWN_HEIGHT
-                #I think [0][1] is can height, 2nd term, index from 0
-    return focalLength
+    My own implementation of cv2.drawMatches as OpenCV 2.4.9
+    does not have this function available but it's supported in
+    OpenCV 3.0.0
+
+    This function takes in two images with their associated 
+    keypoints, as well as a list of DMatch data structure (matches) 
+    that contains which keypoints matched in which images.
+
+    An image will be produced where a montage is shown with
+    the first image followed by the second image beside it.
+
+    Keypoints are delineated with circles, while lines are connected
+    between matching keypoints.
+
+    img1,img2 - Grayscale images
+    kp1,kp2 - Detected list of keypoints through any of the OpenCV keypoint 
+              detection algorithms
+    matches - A list of matches of corresponding keypoints through any
+              OpenCV keypoint matching algorithm
+    """
+
+    # Create a new output image that concatenates the two images together
+    # (a.k.a) a montage
+    rows1 = img1.shape[0]
+    cols1 = img1.shape[1]
+    rows2 = img2.shape[0]
+    cols2 = img2.shape[1]
+
+    out = np.zeros((max([rows1,rows2]),cols1+cols2,3), dtype='uint8')
+
+    # Place the first image to the left
+    out[:rows1,:cols1] = img1#np.dstack([img1, img1, img1])
+
+    # Place the next image to the right of it
+    out[:rows2,cols1:] = img2#np.dstack([img2, img2, img2])
+
+    # For each pair of points we have between both images
+    # draw circles, then connect a line between them
+    for mat in matches:
+
+        # Get the matching keypoints for each of the images
+        img1_idx = mat.queryIdx
+        img2_idx = mat.trainIdx
+
+        # x - columns
+        # y - rows
+        (x1,y1) = kp1[img1_idx].pt
+        (x2,y2) = kp2[img2_idx].pt
+
+        # Draw a small circle at both co-ordinates
+        # radius 4
+        # colour blue
+        # thickness = 1
+        cv2.circle(out, (int(x1),int(y1)), 4, (255, 0, 0), 1)   
+        cv2.circle(out, (int(x2)+cols1,int(y2)), 4, (255, 0, 0), 1)
+
+        # Draw a line in between the two points
+        # thickness = 1
+        # colour blue
+        cv2.line(out, (int(x1),int(y1)), (int(x2)+cols1,int(y2)), (255, 0, 0), 1)
+
+    # Show the image
+    # cv2.imshow('Matched Features', out)
+    # cv2.waitKey(0)
+    # cv2.destroyWindow('Matched Features')
+
+    # Also return the image if you'd like a copy
+    return out  
 
 ##################################START##########################################
-
-#Initialize distance info
-focalLength = 593.11 # in pixels
-fov = np.deg2rad(60) # field of view
-KNOWN_DISTANCE = 24.0
-KNOWN_HEIGHT = .123
-KNOWN_WIDTH = 0.065 # TODO : fix this bullshit parameter
-#16n5calibrate the camera for distance
 
 #Initialize orb type descriptors
 orb = cv2.ORB()
@@ -94,7 +140,7 @@ FLANN_INDEX_KDTREE = 0;
 index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
 search_params = dict(checks=50) #or pass empty dictionary
 flann = cv2.FlannBasedMatcher(index_params,search_params)
-minReqMatches = 4 #Minimum amount of KP matches to ID can
+minReqMatches = 6 #Minimum amount of KP matches to ID can
 #Initialize training image info
 # operating software, open control line, enter string, read 
 # and return results, remove leading or trailing whitespace
@@ -119,18 +165,17 @@ for i in range(1,num_train+1):
         des_train.append(des)
 
 #initialize the images aka the camera stream
-# cap = cv2.VideoCapture(1)
-# cv2.namedWindow('camera view')
+cap = cv2.VideoCapture(1)
+cv2.namedWindow('camera view')
 
-tgt_pub = None
-pub = rospy.Publisher('tgt_can_bottom', Point, queue_size=10)
-# kp_pub =None
-# pub = rospy.Publisher('kp_can_info', Type, queue_size=10)
+def img_cb():
+    _,frame = cap.read()
 
-def img_cb(data):
-    bridge = CvBridge()
-    frame = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
+    cv2.imshow('frame', frame)
+    # bridge = CvBridge()
+    # frame = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
     result = find_marker(frame)
+
 
     if result is not None:
         minRect, colorPixels = result
@@ -143,19 +188,23 @@ def img_cb(data):
         #obtain the info from Rect to draw a box and draw it on the frame
         #box = np.int0(cv2.cv.BoxPoints(minRect))
         #cv2.drawContours(frame, [box], -1, (0, 255, 0), 2)
-        print minRect
+        # print minRect
         x,y,w,h  = minRect
         cv2.circle(frame, (int(x), int(y+h/2)), 10, (255, 0, 0), 3)
 
         ptCenBot = [x, y+h/2]
 
         #check for keypoints inside the box (region of interest)
-        ROI = frame[np.floor(x-w/2):np.floor(x+w/2),np.floor(y-h/2):np.floor(y+h/2)]
+        
+        # ROI = frame[np.floor(x-w/2):np.floor(x+w/2),np.floor(y-h/2):np.floor(y+h/2)]
+        ROI = np.zeros(frame.shape,np.uint8)
+        ROI[y:y+h,x:x+w] = frame[y:y+h,x:x+w]
+
         kp_ROI, des_ROI = orb.detectAndCompute(ROI,None)
         bestMatches = []
         bestNumMatches = 0
         bestTrainImg = 0
-        for t in range(1, num_train+1):
+        for t in range(1, num_train):
             matches, numMatches = find_KPmatches(ROI, des_ROI, kp_ROI, \
                                         img_train[t], des_train[t], kp_train[t])
             #only hold onto the best match, if any
@@ -169,48 +218,18 @@ def img_cb(data):
         # For human viewing need matches, ROI, img_train[bestTrainingImg]
         #   and the respective keypoints. If not ROI then minRect.
 
-        if bestNumMatches > minReqMatches:
-
-
-            #Publish the bottom centerpoint to ROS
-            pub.publish(Point(x=ptCenBot[0], y=ptCenBot[1]))
-
-            # 640x480
-            dx = x - 320
-            dy = y - 240
-
-            theta = np.arctan(dx/focalLength) # yaw-ish
-            phi = np.arctan(dy/focalLength) # pitch
-
-            distance = distance_to_camera(KNOWN_WIDTH, focalLength, w) # distance
-            print 'width', w
-            print 'dist', distance
-
-            tgt_msg = PointStamped()
-
-            tgt_msg.header.frame_id = 'camera'
-            tgt_msg.header.stamp = rospy.Time.now()
-
-            tgt_msg.point.x = distance
-            tgt_msg.point.y = -distance * np.tan(theta) # because y is pointed left in ros, flipped
-            tgt_msg.point.z = -distance * np.tan(phi) # because camera coordinates, y is flipped
-
-            tgt_pub.publish(tgt_msg)
-            #br = tf.TransformBroadcaster()
-            #br.sendTransform((distance,-distance*np.tan(theta),0), #don't really care abt "up" direction;  x is forwards direction. sign of y is flipped because in ros y is pointed left
-            #        tf.transformations.quaternion_from_euler(0,0,0), #don't care
-            #        rospy.Time.now(),
-            #        'can',
-            #        'camera'
-            #        )
+        if bestNumMatches >= minReqMatches:
+            print(bestNumMatches)
+            visMatches = drawMatches(ROI, kp_ROI, img_train[bestTrainImg], \
+                            kp_train[bestTrainImg], bestMatches)
 
         else:
-            ptCen = [0,0]
-            ptCenBot = [0,0]
+            visMatches = drawMatches(ROI, kp_ROI, img_train[0], \
+                            kp_train[0], [])
+        return visMatches
         
     else:
-        ptCen = [0,0]
-        ptCenBot = [0,0]
+        return frame
 
         #Publish the bottom centerpoint to ROS
 #        cv2.imshow('frame', frame) 
@@ -219,15 +238,22 @@ def img_cb(data):
 ##Uncomment to see, silenced for ROS:
 
 def main():
-    global tgt_pub
-    #initialize ROS channels
-    rospy.init_node('can_finder')
-    img_sub = rospy.Subscriber('/alpha/image_raw', Image, img_cb)
-    tgt_pub = rospy.Publisher('can_point', PointStamped, queue_size=10)
-    # kp_pub = rospy.Publisher('kp_can_info', Type, queue_size=10)
+    while(1):
+        thing= img_cb()
+        cv2.imshow('camera view', thing) 
 
-    #rate = rospy.Rate(20)
-    rospy.spin()
+        k = cv2.waitKey(5) & 0xFF
+        if k == 27:
+            break
+    # global tgt_pub
+    # #initialize ROS channels
+    # rospy.init_node('can_finder')
+    # img_sub = rospy.Subscriber('/alpha/image_raw', Image, img_cb)
+    # tgt_pub = rospy.Publisher('can_point', PointStamped, queue_size=10)
+    # # kp_pub = rospy.Publisher('kp_can_info', Type, queue_size=10)
+
+    # #rate = rospy.Rate(20)
+    # rospy.spin()
 
     #begin infinite loop
     #while not rospy.is_shutdown():
@@ -247,4 +273,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
