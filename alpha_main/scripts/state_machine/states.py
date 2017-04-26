@@ -793,6 +793,20 @@ class Loop(State):
         else:
             return 'aborted'
 
+class NotifyGUI(State):
+    """
+    Loop runs several times, ending with returning "aborted"
+    """
+
+    def __init__(self, topic='/we_got_the_can', msg=Bool(True)):
+        State.__init__(self, outcomes=['succeeded', 'aborted'])
+        self.publisher = rospy.Publisher(topic, type(msg), queue_size=10)
+        self.msg = msg
+
+    def execute(self, userdata):
+        self.publisher.publish(self.msg)
+        return 'succeeded'
+
 
 # main
 def main():
@@ -868,10 +882,14 @@ def main():
             StateMachine.add('GRIP', Grip(True),
                              transitions={
                                  # Change to "succeeded" when not testing just PNAV
-                                 'succeeded': 'succeeded',  # start delivery
+                                 'succeeded': 'NOTIFY_GRIP',  # start delivery
                                  'preempted': 'GRIP',
                                  'aborted': 'RELEASE'  # release before continuing nav
                              }
+            StateMachine.add('NOTIFY_GRIP', NotifyGUI('/we_got_the_can', Bool(True)),
+                             transitions={
+                                 'succeeded': 'succeeded'
+                             })
                              )
             StateMachine.add('RELEASE', Grip(False),
                              # TODO: try backing up before attempting to re-grip
