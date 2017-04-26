@@ -5,7 +5,7 @@ import tkMessageBox
 import Tkinter as tk
 import time
 import rospy
-from std_msgs.msg import String, Int16, Int64
+from std_msgs.msg import String, Int16, Int64, Bool
 from sensor_msgs.msg import LaserScan, Imu
 from nav_msgs.msg import Odometry
 
@@ -29,10 +29,11 @@ class Page1(Page): #Localization - Position
 
         # rospy.Subscriber(.....)
         rospy.Subscriber("/odometry/filtered", Odometry, self.Pos)
-
+        
+    
    def Pos(self, msg):
         label = tk.Label(self, text= Odometry(), anchor=W) 
-        label.pack(side="right", fill="both", expand=True)
+        label.pack(side="right", fill="both", expand=False)
         
 
 class Page2(Page): #USB hub - IMU 
@@ -45,7 +46,7 @@ class Page2(Page): #USB hub - IMU
        
    def USB(self, *args, **kwargs):
         label = tk.Label(self, text=Imu()) 
-        label.pack(side="top", fill="both", expand=True)
+        label.pack(side="right", fill="both", expand=True)
 
 class Page3(Page): #Arduino - Wheels 
    def __init__(self, *args, **kwargs):
@@ -55,8 +56,8 @@ class Page3(Page): #Arduino - Wheels
        rospy.Subscriber("/rwheel", Int16, self.wheels)
 
    def wheels(self, *args, **kwargs):
-        label = tk.Label(self, text= Int64()) 
-        label.pack(side="top", fill="both", expand=True)
+        label = tk.Label(self, text= Int16()) 
+        label.pack(side="right", fill="both", expand=True)
 
 
 class Page4(Page): #Lidar - laserscan 
@@ -68,7 +69,7 @@ class Page4(Page): #Lidar - laserscan
        
    def Lidar(self, *args, **kwargs):
        label = tk.Label(self, text= LaserScan()) 
-       label.pack(side="top", fill="both", expand=True)
+       label.pack(side="right", fill="both", expand=True)
         
 class Page5(Page):
    def __init__(self, *args, **kwargs):
@@ -124,24 +125,43 @@ class Page5(Page):
 class Page6(Page):
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
-       label = tk.Label(self, text="")
+       label = tk.Label(self, text="Clear")
        label.pack(side="top", fill="both", expand=True)
        
-class Page7(Page): #Blink when we got the can
+       
+class Page7(Page): #Blink when we got the can -> How to check when the robot grips the can?
     
-    def __init__(self, parent):
-        tk.Frame.__init__(self, parent)
-        self.label = tk.Label(self, text="WE GOT THE CAN!!!",font ="Times 80 bold", 
-                              background="red", foreground="green2")
-        self.label.pack(side="top", fill="both", expand=True, anchor=NW)
-        self.flash()
+    def __init__(self, *args, **kwargs):
+       Page.__init__(self, *args, **kwargs)
+       label = tk.Label(self, text="STATE",font ="Times 20 bold")
+       label.pack(side="top", fill="both", expand=False)
+       rospy.Subscriber("/states", String, self.states)
+       rospy.Subscriber("/we_got_the_can", Bool, self.gotthecan)
 
+    def states(self, msg):
+       label = tk.Label(self, text= String())
+       label.pack(side="top", fill="both", expand=False)
+       
+    def gotthecan(self, parent):
+
+       #tk.Frame.__init__(self, parent)
+       self.label = tk.Label(self, text="WE GOT THE CAN!",font ="Times 80 bold", background="red", foreground="green2")
+       self.label.pack(side="top", fill="both", expand=True, anchor=NW)
+       self.flash()
+       
+            
     def flash(self):
         bg = self.label.cget("background")
         fg = self.label.cget("foreground")
         self.label.configure(background=fg, foreground=bg)
         self.after(700, self.flash)
-       
+        
+        #i need a delay (5 secs) before clearing it #1000=1s
+        self.label.after(5000, self.clear_label)
+
+    def clear_label(self):
+        self.label.pack_forget()
+           
 class MainView(tk.Frame):
     def __init__(self, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
@@ -173,7 +193,7 @@ class MainView(tk.Frame):
         b4 = tk.Button(buttonframe, text="LIDAR", command=p4.lift)
         b5 = tk.Button(buttonframe, text="STATUS CHECK", command=p5.lift)
         b6 = tk.Button(buttonframe, text="CLEAR", command=p6.lift)
-        b7 = tk.Button(buttonframe, text="BLINK", command=p7.lift)
+        b7 = tk.Button(buttonframe, text="STATES", command=p7.lift)
 
         b1.pack(side=LEFT)
         b2.pack(side=LEFT)
@@ -183,7 +203,7 @@ class MainView(tk.Frame):
         b6.pack(side=LEFT)
         b7.pack(side=LEFT)
 
-        p1.show()
+        p7.show()
         
 
 
