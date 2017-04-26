@@ -8,12 +8,11 @@ from smach import *
 from smach_ros import *
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from alpha_action.msg import GripAction, GripGoal
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, OccupancyGrid
 from frontier_exploration.msg import ExploreTaskAction, ExploreTaskActionGoal, ExploreTaskGoal
 from actionlib import SimpleActionClient
 from topic_tools.srv import MuxSelect
 import tf
-
 
 ## Try to filter the can's position by just removing outliers and taking the mean ...
 ## Caution here is the assumption that the map stays relatively correct & stable over time
@@ -457,9 +456,29 @@ class Explore_v2(State):
         self.client.wait_for_server()
         rospy.loginfo('MOVE_BASE SERVER IS UP!')
 
+        rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, self.onMap)
+        self.map = OccupancyGrid()
+
         self.theta = None
         self.theta_t = None
 
+    def onMap(self, msg):
+        """
+
+        :type msg: OccupancyGrid
+        """
+        self.map = msg
+
+    def isNavigable(self, point, threshold=250):
+        map_point = tf_listener.transformPoint(self.map.header.frame_id, point).point
+        x = map_point.x
+        y = map_point.y
+
+        x_coord = int((x - self.map.info.origin.position.x) / self.map.info.resolution)
+        y_coord = int((y - self.map.info.origin.position.y) / self.map.info.resolution)
+
+
+        return self.map.data[x_coord][y_coord] < threshold
     def onCmdVel(self, msg):
         l = msg.linear
         a = msg.angular
@@ -793,6 +812,20 @@ class Loop(State):
         else:
             return 'aborted'
 
+class NotifyGUI(State):
+    """
+    Loop runs several times, ending with returning "aborted"
+    """
+
+    def __init__(self, topic='/we_got_the_can', msg=Bool(True)):
+        State.__init__(self, outcomes=['succeeded', 'aborted'])
+        self.publisher = rospy.Publisher(topic, type(msg), queue_size=10)
+        self.msg = msg
+
+    def execute(self, userdata):
+        self.publisher.publish(self.msg)
+        return 'succeeded'
+
 
 # main
 def main():
@@ -868,10 +901,14 @@ def main():
             StateMachine.add('GRIP', Grip(True),
                              transitions={
                                  # Change to "succeeded" when not testing just PNAV
-                                 'succeeded': 'succeeded',  # start delivery
+                                 'succeeded': 'NOTIFY_GRIP',  # start delivery
                                  'preempted': 'GRIP',
                                  'aborted': 'RELEASE'  # release before continuing nav
                              }
+            StateMachine.add('NOTIFY_GRIP', NotifyGUI('/we_got_the_can', Bool(True)),
+                             transitions={
+                                 'succeeded': 'succeeded'
+                             })
                              )
             StateMachine.add('RELEASE', Grip(False),
                              # TODO: try backing up before attempting to re-grip
