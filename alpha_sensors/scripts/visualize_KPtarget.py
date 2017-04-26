@@ -5,13 +5,19 @@ import numpy as np
 import cv2
 import os
 
+#import ROS stuff
+# import rospy
+# import roslib
+# from sensor_msgs.msg import Image
+# from cv_bridge import CvBridge
+
 def find_marker(image):
     #convert image into HSV, blur it
     imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     imageHSV = cv2.GaussianBlur(imageHSV, (9, 9), 0)
     #declare bounds for target pixel range
-    lower_HSV = np.array([55, 100, 0]) #([70, 100, 10])  ###Outdoor/indoor 7up can
-    higher_HSV = np.array([70, 255, 255]) #([100, 255, 255])
+    lower_HSV = np.array([65, 40, 40]) #([70, 100, 10])  ###Outdoor/indoor 7up can
+    higher_HSV = np.array([80, 255, 255]) #([100, 255, 255])
     #show color pixels in range
     colorPixels = cv2.inRange(imageHSV, lower_HSV, higher_HSV)
 
@@ -133,14 +139,13 @@ def drawMatches(img1, kp1, img2, kp2, matches):
 
 #Initialize orb type descriptors
 orb = cv2.ORB()
-min_matches = 1 #minimum number of KP matches
 num_train = 11 #number of training images
 #FLANN parameters
 FLANN_INDEX_KDTREE = 0;
 index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
 search_params = dict(checks=50) #or pass empty dictionary
 flann = cv2.FlannBasedMatcher(index_params,search_params)
-minReqMatches = 6 #Minimum amount of KP matches to ID can
+minReqMatches = 7 #Minimum amount of KP matches to ID can
 #Initialize training image info
 # operating software, open control line, enter string, read 
 # and return results, remove leading or trailing whitespace
@@ -165,10 +170,15 @@ for i in range(1,num_train+1):
         des_train.append(des)
 
 #initialize the images aka the camera stream
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 cv2.namedWindow('camera view')
 
-def img_cb():
+def img_cb(): # arg data if ROS, empty if computer camera
+    #ROS
+    # bridge = CvBridge()
+    # frame = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
+
+    #Comp Camera
     _,frame = cap.read()
 
     cv2.imshow('frame', frame)
@@ -231,13 +241,15 @@ def img_cb():
     else:
         return frame
 
-        #Publish the bottom centerpoint to ROS
-#        cv2.imshow('frame', frame) 
-#        cv2.imshow('can', colorPixels) 
-#        cv2.waitKey(10)
-##Uncomment to see, silenced for ROS:
 
 def main():
+    #Note main() and img_cb() need to change for ROS/Computer vision
+
+    #ROS (comment 2 lines if computer vision)
+    # rospy.init_node('can_finder')
+    # img_sub = rospy.Subscriber('/alpha/image_raw', Image, img_cb)
+
+
     while(1):
         thing= img_cb()
         cv2.imshow('camera view', thing) 
@@ -245,6 +257,10 @@ def main():
         k = cv2.waitKey(5) & 0xFF
         if k == 27:
             break
+
+    #ROS (comment 1 line if computer vision)
+    # rospy.spin()
+
     # global tgt_pub
     # #initialize ROS channels
     # rospy.init_node('can_finder')
