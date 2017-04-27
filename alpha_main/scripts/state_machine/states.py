@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 import math
+
+import itertools
 import rospy
 import numpy as np
+from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import PoseStamped, PolygonStamped, PointStamped, Pose, Quaternion, Point, Twist, Vector3
-from std_msgs.msg import Header, Bool
+from std_msgs.msg import Header, Bool, ColorRGBA
 from smach import *
 from smach_ros import *
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -13,6 +16,7 @@ from frontier_exploration.msg import ExploreTaskAction, ExploreTaskActionGoal, E
 from actionlib import SimpleActionClient
 from topic_tools.srv import MuxSelect
 import tf
+
 
 ## Try to filter the can's position by just removing outliers and taking the mean ...
 ## Caution here is the assumption that the map stays relatively correct & stable over time
@@ -94,7 +98,6 @@ class MissionSubscriber(object):
         self.del_sub = rospy.Subscriber('/del_pt', PointStamped, self.onDel)
         self.can_sub = rospy.Subscriber('/can_point', PointStamped, self.onCan)
 
-
     def convert(self, msg):
         try:
             now = rospy.Time.now()
@@ -170,11 +173,11 @@ class Navigate(State):
         rospy.loginfo('MOVE_BASE SERVER IS UP!')
 
         goal = self.make_goal()
-        client.send_goal(goal) # don't continuously update goals
+        client.send_goal(goal)  # don't continuously update goals
 
         while True:
-            client.wait_for_result(rospy.Duration(1.0)) # wait 1 sec.
-            #client.send_goal_and_wait(goal, execute_timeout=rospy.Duration(5.0))  # wait 10 sec. until completion
+            client.wait_for_result(rospy.Duration(1.0))  # wait 1 sec.
+            # client.send_goal_and_wait(goal, execute_timeout=rospy.Duration(5.0))  # wait 10 sec. until completion
             res = client.get_state()
             now = rospy.Time.now()
 
@@ -194,7 +197,7 @@ class Navigate(State):
                 return 'lost'  # lost can from sight somehow
 
             dist = self.destination.x ** 2 + self.destination.y ** 2
-            if res == 3: #move_base success
+            if res == 3:  # move_base success
                 client.cancel_all_goals()  # start manual drive!
                 return 'succeeded'
 
@@ -462,6 +465,8 @@ class Explore_v2(State):
         self.theta = None
         self.theta_t = None
 
+        self.visPub = rospy.Publisher('/explore_vis', Marker, queue_size=1)
+
     def onMap(self, msg):
         """
 
@@ -477,8 +482,8 @@ class Explore_v2(State):
         x_coord = int((x - self.map.info.origin.position.x) / self.map.info.resolution)
         y_coord = int((y - self.map.info.origin.position.y) / self.map.info.resolution)
 
-
         return self.map.data[x_coord][y_coord] < threshold
+
     def onCmdVel(self, msg):
         l = msg.linear
         a = msg.angular
@@ -490,7 +495,7 @@ class Explore_v2(State):
 
     def onOdom(self, msg):
         q = msg.pose.pose.orientation
-        #t =  msg.header.stamp
+        # t =  msg.header.stamp
         # q.z == sin(theta/2)
         # q.w == cos(theta/2)
         self.theta = 2 * math.atan2(q.w, q.z)
@@ -528,12 +533,12 @@ class Explore_v2(State):
         # spin counterclockwise 180 deg.
         def spin_half(self):
             start_angle = self.theta
-            end_angle = start_angle + math.pi # normalized to 0 ~ 2*pi
+            end_angle = start_angle + math.pi  # normalized to 0 ~ 2*pi
             while not rospy.is_shutdown():
                 t1 = self.theta % (2 * math.pi)
                 delta_angle = (end_angle - self.theta + math.pi) % (2 * math.pi) - math.pi
                 # delta_angle from -pi ~ pi
-                if abs(delta_angle) < 0.08: # ~5 deg. tolerance
+                if abs(delta_angle) < 0.08:  # ~5 deg. tolerance
                     break
                 self.cmd_pub.publish(Twist(angular=Vector3(z=speed)))
                 r.sleep()
@@ -542,7 +547,7 @@ class Explore_v2(State):
         # assert abs(self.theta - start_angle) < eps
         spin_half(self)
 
-        #while (rospy.Time.now() - startTime).to_sec() < 2 * math.pi / speed:
+        # while (rospy.Time.now() - startTime).to_sec() < 2 * math.pi / speed:
         #    if rospy.is_shutdown():
         #        exit()
 
@@ -558,6 +563,18 @@ class Explore_v2(State):
         # TODO: generate along multiple axes
         x, y, _ = userdata.initial_point
         x, y = 0, 0
+
+        spacing = 1.0  # meters
+        size = 10.0  # meters
+
+        axis = [spacing * n for n in range(-int(size/spacing), int(size/spacing)+1)]
+
+        points = itertools.product(axis, axis)
+
+        self.visualizePoints(points)
+
+        rospy.sleep(rospy.Duration(1))
+        exit()
 
         i = 0
         for _ in range(self.num_points):
@@ -602,53 +619,6 @@ class Explore_v2(State):
 
         return 'succeeded'
 
-        while True:
-
-            if rospy.is_shutdown():
-                exit()
-
-            if client.wait_for_result(rospy.Duration(0.3)):  # 0.3 sec. timeout to check for cans
-                # The exploration node has finished
-                res = client.get_state()
-                rospy.loginfo('EXPLORE SERVER STATE:{}'.format(res))
-                if res == 3:  ## SUCCEEDED
-                    # if exploration is complete...
-                    userdata.boundary += 1.0  # explore a larger area
-                    return 'succeeded'  # finished! yay!
-                else:
-                    print 'explore server failed : {}'.format(res)
-                    # when explore server gives up, can't explore
-                    return 'stuck'
-
-            now = rospy.Time.now()
-
-            if self.objective == 'discovery':
-                t = ms.dis_data.time
-                p = ms.dis_pt()
-            elif self.objective == 'delivery':
-                t = ms.del_data.time
-                p = ms.del_pt()
-            else:
-                rospy.logerr('Invalid objective passed to Explore state')
-                return 'aborted'
-
-            # if we're here, exploration is not complete yet...
-            if t != None:  # check initialized
-                dt = (now - t).to_sec()
-                discovered = (dt < 2.0)  # last seen within the last 2 seconds
-                if discovered:
-                    # if can was found ...
-                    client.cancel_all_goals()
-                    userdata.destination = p
-                    return 'discovered'
-
-            # more than 20 seconds have passed while completely still
-            # we're probably stuck
-            if (now - self.last_mv).to_sec() > self.stuck_timeout:
-                print 'haven\'t been moving for a while!'
-                client.cancel_all_goals()
-                return 'stuck'  # bad name... "stuck" would be better
-
     def execute(self, userdata):
         self.subscribe()
 
@@ -669,6 +639,28 @@ class Explore_v2(State):
         res = self.execute_inner(userdata)
         self.unsubscribe()
         return res
+
+    def visualizePoints(self, points, frame_id='map'):
+        markers = []
+        for i, p in enumerate(points):
+            x, y = p
+            #canReach = self.isNavigable(PointStamped(point=Point(x=x, y=y), header=Header(frame_id=frame_id)))
+            canReach=False
+
+            m = Marker()
+            m.type = Marker.SPHERE
+            m.id = i
+            if canReach:
+                m.color = ColorRGBA(g=1, a=1)
+            else:
+                m.color = ColorRGBA(r=1, a=1)
+
+            m.scale = Vector3(x=0.2, y=0.2, z=0.2)
+
+            markers.append(m)
+            self.visPub.publish(m)
+
+        # self.visPub.publish(MarkerArray(markers))
 
 
 def Grip(close=True):
@@ -706,7 +698,7 @@ class ProximityNav(State):
 
         # Drive the robot
         stop = Twist()
-        phase = 'TURN' # 'TURN' or 'APPROACH'
+        phase = 'TURN'  # 'TURN' or 'APPROACH'
 
         while rospy.Time.now() - start_time < self.timeout and not rospy.is_shutdown():
 
@@ -738,13 +730,13 @@ class ProximityNav(State):
             if speed > self.max_speed:
                 speed = self.max_speed
 
-            if abs(angle_error) < 0.08: # 5 deg.
+            if abs(angle_error) < 0.08:  # 5 deg.
                 phase = 'APPROACH'
 
-            if phase is 'TURN': # Don't move forwards until can is reasonably centered
+            if phase is 'TURN':  # Don't move forwards until can is reasonably centered
                 speed = 0.0
 
-            if dist < 0.3: # reduce speed by half, if too close
+            if dist < 0.3:  # reduce speed by half, if too close
                 speed *= 0.5
 
             turn_power = self.kp * angle_error
@@ -811,6 +803,7 @@ class Loop(State):
             return 'succeeded'
         else:
             return 'aborted'
+
 
 class NotifyGUI(State):
     """
@@ -904,12 +897,11 @@ def main():
                                  'succeeded': 'NOTIFY_GRIP',  # start delivery
                                  'preempted': 'GRIP',
                                  'aborted': 'RELEASE'  # release before continuing nav
-                             }
+                             })
             StateMachine.add('NOTIFY_GRIP', NotifyGUI('/we_got_the_can', Bool(True)),
                              transitions={
                                  'succeeded': 'succeeded'
                              })
-                             )
             StateMachine.add('RELEASE', Grip(False),
                              # TODO: try backing up before attempting to re-grip
                              transitions={
@@ -919,17 +911,17 @@ def main():
                              }
                              )
 
-            #StateMachine.add('EXPLORE2', Explore_v2('discovery'),
-            #                 # TODO: try backing up before attempting to re-grip
-            #                 transitions={
-            #                     'succeeded': 'aborted',
-            #                     'stuck': 'aborted',
-            #                     'discovered': 'aborted',
-            #                     'aborted': 'aborted'
-            #                 }
-            #                 )
+            StateMachine.add('EXPLORE2', Explore_v2('discovery'),
+                            # TODO: try backing up before attempting to re-grip
+                            transitions={
+                                'succeeded': 'aborted',
+                                'stuck': 'aborted',
+                                'discovered': 'aborted',
+                                'aborted': 'aborted'
+                            }
+                            )
 
-        sm_dis.set_initial_state(['EXPLORE'])
+        sm_dis.set_initial_state(['EXPLORE2'])
 
         sm_del = StateMachine(
             outcomes=['succeeded', 'aborted'],
