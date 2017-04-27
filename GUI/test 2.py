@@ -26,14 +26,15 @@ class Page1(Page): #Localization - Position
         Page.__init__(self, *args, **kwargs)
         label = tk.Label(self, text="LOCALIZATION",font ="Times 20 bold")
         label.pack(side="top", fill="both", expand=True)
-
+        self.newlabel = tk.Label(self,text="")
         # rospy.Subscriber(.....)
         rospy.Subscriber("/odometry/filtered", Odometry, self.Pos)
         
     
    def Pos(self, msg):
-        label = tk.Label(self, text= Odometry(), anchor=W) 
-        label.pack(side="right", fill="both", expand=False)
+        self.newlabel.pack_forget()
+        self.newlabel = tk.Label(self, text= str(msg), anchor=W) 
+        self.newlabel.pack(side="right", fill="both", expand=True)
         
 
 class Page2(Page): #USB hub - IMU 
@@ -42,22 +43,27 @@ class Page2(Page): #USB hub - IMU
        Page.__init__(self, *args, **kwargs)
        label = tk.Label(self, text="IMU DATA",font ="Times 20 bold")
        label.pack(side="top", fill="both", expand=True)
+       self.newlabel = tk.Label(self,text="")
        rospy.Subscriber("/imu/data", Imu, self.USB)
        
-   def USB(self, *args, **kwargs):
-        label = tk.Label(self, text=Imu()) 
-        label.pack(side="right", fill="both", expand=True)
+   def USB(self, msg):
+        self.newlabel.pack_forget()
+        self.newlabel = tk.Label(self, text= str(msg))
+        self.newlabel.pack(side="right", fill="both", expand=True)
 
 class Page3(Page): #Arduino - Wheels 
    def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
        label = tk.Label(self, text="ARDUINO COMMUNICATION",font ="Times 20 bold")
        label.pack(side="top", fill="both", expand=True)
+       self.newlabel = tk.Label(self,text="")
+
        rospy.Subscriber("/rwheel", Int16, self.wheels)
 
-   def wheels(self, *args, **kwargs):
-        label = tk.Label(self, text= Int16()) 
-        label.pack(side="right", fill="both", expand=True)
+   def wheels(self, msg): 
+        self.newlabel.pack_forget()
+        self.newlabel = tk.Label(self, text="Data:" + str(msg.data)) 
+        self.newlabel.pack(side="right", fill="both", expand=True)
 
 
 class Page4(Page): #Lidar - laserscan 
@@ -65,11 +71,13 @@ class Page4(Page): #Lidar - laserscan
        Page.__init__(self, *args, **kwargs)
        label = tk.Label(self, text="LIDAR DATA",font ="Times 20 bold")
        label.pack(side="top", fill="both", expand=True)
+       self.newlabel = tk.Label(self,text="")
        rospy.Subscriber("/scan", LaserScan, self.Lidar)
        
-   def Lidar(self, *args, **kwargs):
-       label = tk.Label(self, text= LaserScan()) 
-       label.pack(side="right", fill="both", expand=True)
+   def Lidar(self, msg):
+       self.newlabel.pack_forget()
+       self.newlabel = tk.Label(self, text= str(msg)) 
+       self.newlabel.pack(side="right", fill="both", expand=True)
         
 class Page5(Page):
    def __init__(self, *args, **kwargs):
@@ -135,33 +143,31 @@ class Page7(Page): #Blink when we got the can -> How to check when the robot gri
        Page.__init__(self, *args, **kwargs)
        label = tk.Label(self, text="STATE",font ="Times 20 bold")
        label.pack(side="top", fill="both", expand=False)
-       rospy.Subscriber("/states", String, self.states)
+       self.state = tk.Label(self,text="")
+       self.MSG= tk.Label(self,text="")
+       
        rospy.Subscriber("/we_got_the_can", Bool, self.gotthecan)
+       rospy.Subscriber("/states", String, self.states)
 
     def states(self, msg):
-       label = tk.Label(self, text= String())
-       label.pack(side="top", fill="both", expand=False)
-       
-    def gotthecan(self, parent):
+       self.state.pack_forget()
+       self.state = tk.Label(self, text= "Current state: " +str(msg.data))
+       self.state.pack(side="top", fill="both", expand=False)
 
-       #tk.Frame.__init__(self, parent)
-       self.label = tk.Label(self, text="WE GOT THE CAN!",font ="Times 80 bold", background="red", foreground="green2")
-       self.label.pack(side="top", fill="both", expand=True, anchor=NW)
-       self.flash()
-       
+    def gotthecan(self, msg):
+        #self.blink.pack_forget()
+        if ( msg.data == 1 ):
+            self.MSG = tk.Label(self, text="WE GOT THE CAN!",font ="Times 80 bold", background="green2", foreground="red")
+            self.MSG.pack(side="top", fill="both", expand=True, anchor=NW)
+            self.delay()
             
-    def flash(self):
-        bg = self.label.cget("background")
-        fg = self.label.cget("foreground")
-        self.label.configure(background=fg, foreground=bg)
-        self.after(700, self.flash)
+    def delay(self):
+        self.MSG.after(5000, self.clear_label)
         
-        #i need a delay (5 secs) before clearing it #1000=1s
-        self.label.after(5000, self.clear_label)
-
     def clear_label(self):
-        self.label.pack_forget()
-           
+        self.MSG.pack_forget()
+      
+       
 class MainView(tk.Frame):
     def __init__(self, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
