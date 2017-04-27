@@ -648,6 +648,7 @@ class Explore_v2(State):
             canReach=False
 
             m = Marker()
+            m.header.frame_id = 'map'
             m.type = Marker.SPHERE
             m.id = i
             if canReach:
