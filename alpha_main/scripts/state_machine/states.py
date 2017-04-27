@@ -565,7 +565,7 @@ class Explore_v2(State):
         x, y = 0, 0
 
         spacing = 1.0  # meters
-        size = 10.0  # meters
+        size = 2.0  # meters
 
         axis = [spacing * n for n in range(-int(size/spacing), int(size/spacing)+1)]
 
