@@ -656,6 +656,8 @@ class Explore_v2(State):
             else:
                 m.color = ColorRGBA(r=1, a=1)
 
+            m.pose.position = Point(x=x, y=y)
+
             m.scale = Vector3(x=0.2, y=0.2, z=0.2)
 
             markers.append(m)
