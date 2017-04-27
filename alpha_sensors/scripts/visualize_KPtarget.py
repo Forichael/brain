@@ -16,8 +16,8 @@ def find_marker(image):
     imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     imageHSV = cv2.GaussianBlur(imageHSV, (9, 9), 0)
     #declare bounds for target pixel range
-    lower_HSV = np.array([65, 40, 40]) #([70, 100, 10])  ###Outdoor/indoor 7up can
-    higher_HSV = np.array([80, 255, 255]) #([100, 255, 255])
+    lower_HSV = np.array([0, 0, 0])#([50, 120, 10])#([65, 40, 40]) #([70, 100, 10])  ###Outdoor/indoor 7up can
+    higher_HSV = np.array([255, 255, 255]) #([100, 255, 255])
     #show color pixels in range
     colorPixels = cv2.inRange(imageHSV, lower_HSV, higher_HSV)
 
@@ -57,10 +57,50 @@ def find_KPmatches(img1, des1, kp1, img2, des2, kp2):
                 if m.distance < 0.7*n.distance:
                     good.append(m)
                     # dist.append(n)
-            return good, len(good)
+
+            # if len(good) >= minReqMatches:
+            #     src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
+            #     dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
+            #     M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,3)
+            #     matchesMask = mask.ravel().tolist()
+            #     h,w = img1.shape
+            #     pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+            #     dst = cv2.perspectiveTransform(pts,M)
+
+            #     img2 = cv2.polylines(img2,[np.int32(dst)],True,255,3, cv2.LINE_AA)
+            #     print "%d/%d" % (len(good),minReqMatches)
+                
+            else:
+                # print "Not enough matches are found - %d/%d" % (len(good),minReqMatches)
+                matchesMask = None
+
+            # Hcounter=0
+            # # print('trying Homography')
+            # # #cv2.findHomography(srcPoints, dstPoints[, method[, ransacReprojThreshold[, mask]]]) ->retval, mask
+            # # H = cv2.findHomography(src_pts, dst_pts, CV_RANSAC, 3, mask)
+            # # print('success!')
+            # for i in range(0,len(good)):
+            #     #look for inliers val=1; note outliers val=0
+            #     if (matchesMask[i,0]==1):
+            #         Hcounter=Hcounter+1
+            # print(Hcounter)
+
+            # matchesMask = None
+            # return good, len(good), matchesMask
                 
         except:
-            return [], 0
+            return [], 0, None
+
+# def find_Homography(obj, scene):
+#     Hcounter=0
+#     H = cv2.findHomography(obj, scene, CV_RANSAC, 3, mask)
+#     for i in range(0,len(good)):
+#         #look for inliers val=1; note outliers val=0
+#         if (mask[i,0]==1):
+#             Hcounter=Hcounter+1
+
+
+
 ### drawMatches() not defined until opencv3.0.0
 def drawMatches(img1, kp1, img2, kp2, matches):
     """
@@ -145,7 +185,7 @@ FLANN_INDEX_KDTREE = 0;
 index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
 search_params = dict(checks=50) #or pass empty dictionary
 flann = cv2.FlannBasedMatcher(index_params,search_params)
-minReqMatches = 7 #Minimum amount of KP matches to ID can
+minReqMatches = 4 #Minimum amount of KP matches to ID can
 #Initialize training image info
 # operating software, open control line, enter string, read 
 # and return results, remove leading or trailing whitespace
@@ -215,8 +255,8 @@ def img_cb(): # arg data if ROS, empty if computer camera
         bestNumMatches = 0
         bestTrainImg = 0
         for t in range(1, num_train):
-            matches, numMatches = find_KPmatches(ROI, des_ROI, kp_ROI, \
-                                        img_train[t], des_train[t], kp_train[t])
+            matches, numMatches, Hthing = find_KPmatches(ROI, des_ROI, kp_ROI, \
+                                                    img_train[t], des_train[t], kp_train[t])
             #only hold onto the best match, if any
             if numMatches > bestNumMatches:
                 bestNumMatches = numMatches #number of KP matches made
@@ -234,12 +274,14 @@ def img_cb(): # arg data if ROS, empty if computer camera
                             kp_train[bestTrainImg], bestMatches)
 
         else:
-            visMatches = drawMatches(ROI, kp_ROI, img_train[0], \
-                            kp_train[0], [])
-        return visMatches
+            visMatches = drawMatches(ROI, kp_ROI, img_train[bestTrainImg], \
+                            kp_train[bestTrainImg], [])
+        return  visMatches
         
     else:
-        return frame
+        return drawMatches(np.zeros(frame.shape,np.uint8), [], img_train[0], \
+                            [], [])
+
 
 
 def main():
