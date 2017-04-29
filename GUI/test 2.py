@@ -27,16 +27,68 @@ class Page1(Page): #Localization - Position
         label = tk.Label(self, text="LOCALIZATION",font ="Times 20 bold")
         label.pack(side="top", fill="both", expand=True)
         self.newlabel = tk.Label(self,text="")
+        self.CV = tk.Canvas(self, height=500, width=700, borderwidth=0, highlightthickness=0)
         # rospy.Subscriber(.....)
-        rospy.Subscriber("/odometry/filtered", Odometry, self.Pos)
+        rospy.Subscriber("/odometry/filtered/local", Odometry, self.Pos)
         
     
-   def Pos(self, msg):
+   def Pos(self, msg): 
         self.newlabel.pack_forget()
-        self.newlabel = tk.Label(self, text= str(msg), anchor=W) 
+        self.newlabel = tk.Label(self, text= str(msg.pose.pose), anchor=W)
         self.newlabel.pack(side="right", fill="both", expand=True)
-        
 
+        #drawgrid
+        a=0      
+            
+        while (a<15):
+            self.CV.create_line(50*a, 0, 50*a,500  ) #vertical line
+            self.CV.create_line(0, 50*a, 700, 50*a) #horizontal line
+            self.CV.pack(side="left", fill = "both",expand =True)
+            a=a+1
+
+        #draw direction
+        i=350
+        j=0
+        iold=0
+        jold=0
+        ishift=0
+        jshift=0
+        new = 0
+        old = 0
+        
+        while(i>0, i<700, j>0, j<500):
+            
+            ishiftold=ishift
+            jshiftold=jshift
+            print (iold,jold,i+ishiftold,j+jshiftold)            
+
+            i1 = msg.pose.pose.position.x
+            j1 = msg.pose.pose.position.y
+            time.sleep(7)
+            i2 =msg.pose.pose.position.x
+            j2 = msg.pose.pose.position.y                       
+            print (iold,jold,i+ishiftold,j+jshiftold, i1,i2, j1,j2)
+
+            if (new>old):               
+                    self.CV.create_line(iold, jold, iold+ishiftold, jold+jshiftold, fill="red", width=2)
+                    
+                    #produce new starting point
+                    i=i+ishift
+                    j=j+jshift
+                    print(old, i, j)
+                        
+            iold=i
+            jold=j
+            #ishift = input ('ishift=')
+            ishift = i2-i1
+            #jshift = input('jshift=')
+            jshift = j2-j1
+            new=new+1
+            self.CV.create_line(i, j, i+ishift, j+jshift, fill="green2", width=2)
+            print(i , j, i+ishift, j+jshift)
+            time.sleep(2)
+            
+        
 class Page2(Page): #USB hub - IMU 
     
    def __init__(self, *args, **kwargs):
@@ -62,7 +114,7 @@ class Page3(Page): #Arduino - Wheels
 
    def wheels(self, msg): 
         self.newlabel.pack_forget()
-        self.newlabel = tk.Label(self, text="Data:" + str(msg.data)) 
+        self.newlabel = tk.Label(self, text="Data:" + str(msg.data), font ="Times 25 bold") 
         self.newlabel.pack(side="right", fill="both", expand=True)
 
 
@@ -85,11 +137,11 @@ class Page5(Page):
        label = tk.Label(self, text= "" )
        label.pack(side="bottom", fill="both", expand=True)
        
-       self.C = tk.Canvas(self, height=500, width=800, borderwidth=0, highlightthickness=0,)
+       self.C = tk.Canvas(self, height=500, width=800, borderwidth=0, highlightthickness=0)
        
        
        self.C.create_oval(20,10,260,250, fill='red')
-       self.C.create_text(140,130,fill="navy",text="POSITION",font ="Times 30 bold")
+       self.C.create_text(140,130,fill="navy",text="STATE",font ="Times 30 bold")
 
        self.C.create_oval(300,10,540,250, fill='red')
        self.C.create_text(420,130,fill="navy",text="USB",font ="Times 30 bold")
@@ -102,19 +154,19 @@ class Page5(Page):
 
        self.C.pack(side="left", fill = "both",expand =True)
        
-       rospy.Subscriber("/odometry/filtered", Odometry, self.Localization)
+       rospy.Subscriber("/states", String, self.states)
        rospy.Subscriber("/imu/data", Imu, self.USB)
        rospy.Subscriber("/rwheel", Int16, self.wheels) #/rhweel is the topic name
        rospy.Subscriber("/scan", LaserScan, self.Lidar)
        
 
-   def Localization(self, msg):
-       print "position"
+   def states(self, msg):
+       print "STATE"
        self.C.create_oval(20,10,260,250, fill='green2')
-       self.C.create_text(140,130,fill="navy",text="POSITION",font ="Times 30 bold")
+       self.C.create_text(140,130,fill="navy",text="STATE",font ="Times 30 bold")
 
    def USB(self, msg):
-       #msg.data
+       
        print "We got data!"
        self.C.create_oval(300,10,540,250, fill='green2')
        self.C.create_text(420,130,fill="navy",text="USB", font ="Times 30 bold")
@@ -129,43 +181,52 @@ class Page5(Page):
        self.C.create_oval(300,258,540,498, fill='green2')
        self.C.create_text(420,378,fill="navy",text="LIDAR",font ="Times 30 bold")
 
-   
-class Page6(Page):
-   def __init__(self, *args, **kwargs):
-       Page.__init__(self, *args, **kwargs)
-       label = tk.Label(self, text="Clear")
-       label.pack(side="top", fill="both", expand=True)
        
-       
-class Page7(Page): #Blink when we got the can -> How to check when the robot grips the can?
+class Page6(Page): 
     
     def __init__(self, *args, **kwargs):
        Page.__init__(self, *args, **kwargs)
        label = tk.Label(self, text="STATE",font ="Times 20 bold")
        label.pack(side="top", fill="both", expand=False)
        self.state = tk.Label(self,text="")
-       self.MSG= tk.Label(self,text="")
+       self.MSG = tk.Label(self,text="")
+       self.MC = tk.Label(self,text="")
        
        rospy.Subscriber("/we_got_the_can", Bool, self.gotthecan)
+       rospy.Subscriber("/mission_complete", Bool, self.mission_complete)
        rospy.Subscriber("/states", String, self.states)
 
     def states(self, msg):
        self.state.pack_forget()
-       self.state = tk.Label(self, text= "Current state: " +str(msg.data))
+       self.state = tk.Label(self, text= "Current state: " +str(msg.data),font ="Times 15 bold")
        self.state.pack(side="top", fill="both", expand=False)
 
-    def gotthecan(self, msg):
-        #self.blink.pack_forget()
+    def gotthecan(self, msg):        
         if ( msg.data == 1 ):
             self.MSG = tk.Label(self, text="WE GOT THE CAN!",font ="Times 80 bold", background="green2", foreground="red")
             self.MSG.pack(side="top", fill="both", expand=True, anchor=NW)
             self.delay()
+
+    def mission_complete(self, msg):        
+        if ( msg.data == 1 ):
+            self.MC = tk.Label(self, text="MISSION COMPLETE!",font ="Times 75 bold", background="black", foreground="white")
+            self.MC.pack(side="top", fill="both", expand=True, anchor=NW)
+            self.delay()    
+            
             
     def delay(self):
         self.MSG.after(5000, self.clear_label)
+        self.MC.after(5000, self.clear_label)
         
     def clear_label(self):
         self.MSG.pack_forget()
+        self.MC.pack_forget()
+
+class Page7(Page):
+   def __init__(self, *args, **kwargs):
+       Page.__init__(self, *args, **kwargs)
+       label = tk.Label(self, text="")
+       label.pack(side="top", fill="both", expand=True)
       
        
 class MainView(tk.Frame):
@@ -189,17 +250,17 @@ class MainView(tk.Frame):
         p3.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
         p4.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
         p5.place(in_=container, x=0, y=0, relwidth=1.5, relheight=1.75)
-        p6.place(in_=container, x=0, y=0, relwidth=1.5, relheight=1.75)
-        p7.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
+        p6.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
+        p7.place(in_=container, x=0, y=0, relwidth=1.5, relheight=1.75)
 
 #buttons
-        b1 = tk.Button(buttonframe, text="LOCALIZATION", command=p1.lift)
-        b2 = tk.Button(buttonframe, text="USB HUB", command=p2.lift)
-        b3 = tk.Button(buttonframe, text="ARDUINO", command=p3.lift)
-        b4 = tk.Button(buttonframe, text="LIDAR", command=p4.lift)
-        b5 = tk.Button(buttonframe, text="STATUS CHECK", command=p5.lift)
-        b6 = tk.Button(buttonframe, text="CLEAR", command=p6.lift)
-        b7 = tk.Button(buttonframe, text="STATES", command=p7.lift)
+        b1 = tk.Button(buttonframe, text="LOCALIZATION", font ="Times 10 bold", command=p1.lift)
+        b2 = tk.Button(buttonframe, text="IMU DATA",font ="Times 10 bold", command=p2.lift)
+        b3 = tk.Button(buttonframe, text="ARDUINO", font ="Times 10 bold", command=p3.lift)
+        b4 = tk.Button(buttonframe, text="LIDAR", font ="Times 10 bold", command=p4.lift)
+        b5 = tk.Button(buttonframe, text="STATUS CHECK", font ="Times 10 bold", command=p5.lift)
+        b6 = tk.Button(buttonframe, text="STATE", font ="Times 10 bold", command=p6.lift)
+        b7 = tk.Button(buttonframe, text="CLEAR", font ="Times 10 bold", command=p7.lift)
 
         b1.pack(side=LEFT)
         b2.pack(side=LEFT)
@@ -209,7 +270,7 @@ class MainView(tk.Frame):
         b6.pack(side=LEFT)
         b7.pack(side=LEFT)
 
-        p7.show()
+        p1.show()
         
 
 
