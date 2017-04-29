@@ -8,3 +8,4 @@ Messages on the following topics turn the status indicators green:
 - LIDAR data: `/scan` (type sensor_msgs/LaserScan)
 - Localization: `/odometry/filtered` (type nav_msgs/Odometry)
 - "Got that Can" : '/we_got_the_can' (type std_msgs/Bool) 
+- Mission complete : '/mission_complete' (type std_msgs/Bool) 
