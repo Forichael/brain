@@ -60,6 +60,20 @@ Robotic Systems Integration, Olin College of Engineering, SP2017
 	roslaunch alpha_main bringup.launch
 	```
 
+## Standard Procedure for Mission
+
+### SLAM
+
+Don't copy an paste the below lines in the terminal; run them sequentially.
+
+```bash
+roslaunch alpha_localization mapping.launch
+roslaunch alpha_navigation move_base.launch slam:=true
+roslaunch alpha_navigation frontier_exploration.launch
+rosrun alpha_main states.py
+```
+
+
 ## Running the Simulation
 
 To run the fully integrated simulation for finding the can and heading towards it:
@@ -67,7 +81,7 @@ To run the fully integrated simulation for finding the can and heading towards i
 1. Launch the Simulator:
 
 	```bash
-	roslaunch alpha_main gazebo.launch
+	roslaunch alpha_gazebo gazebo.launch
 	```
 
 1. Launch the Navigation Stack:
@@ -85,7 +99,7 @@ To run the fully integrated simulation for finding the can and heading towards i
 1. [Optional] For better viewing, launch rviz:
 
 	```bash
-	rviz -d $(rospack find alpha_main)/launch/simulation_view.rviz
+	roslaunch alpha_main rviz.launch
 	```
 
 1. Launch the exploration node:
