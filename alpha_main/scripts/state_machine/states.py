@@ -222,7 +222,11 @@ class Navigate(State):
         x, y = self.destination.x, self.destination.y
         theta = math.atan2(y, x)
 
-        r = 1.0  # 1m back from target position
+        if self.objective == 'discovery':
+            r = 1.0  # 1m back from target position
+        elif self.objective == 'delivery':
+            r = 0.5 # 0.5m back from target position, i.e. "not eternally far away that it seems like a failure"
+
         x -= r * math.cos(theta)
         y -= r * math.sin(theta)
 
@@ -279,6 +283,8 @@ class Stuck(State):
                 if client.wait_for_result(
                         rospy.Duration(1.0)):  # if move_base decides earlier that a goal is impossible...
                     res = client.get_state()
+                    text = client.get_goal_status_text()
+                    print text
                     if res == 3:  ## SUCCEEDED
                         return 'succeeded'
         return 'aborted'
@@ -302,7 +308,6 @@ class Stuck(State):
         )
         goal = MoveBaseGoal(target_pose=target_pose)
         return goal
-
 
 class Explore(State):
     def __init__(self, objective):
@@ -348,10 +353,11 @@ class Explore(State):
         r = userdata.boundary / 2.0
         rospy.loginfo('boundary : {}'.format(r))
         x, y, _ = userdata.initial_point
-        boundary.polygon.points.append(Point(x + r, y + r, 0))
-        boundary.polygon.points.append(Point(x - r, y + r, 0))
-        boundary.polygon.points.append(Point(x - r, y - r, 0))
-        boundary.polygon.points.append(Point(x + r, y - r, 0))
+
+        #boundary.polygon.points.append(Point(x + r, y + r, 0))
+        #boundary.polygon.points.append(Point(x - r, y + r, 0))
+        #boundary.polygon.points.append(Point(x - r, y - r, 0))
+        #boundary.polygon.points.append(Point(x + r, y - r, 0))
 
         center = PointStamped()
         center.header.frame_id = "map"
@@ -379,6 +385,7 @@ class Explore(State):
                     userdata.boundary += 1.0  # explore a larger area
                     return 'succeeded'  # finished! yay!
                 else:
+                    print client.get_goal_status_text()
                     print 'explore server failed : {}'.format(res)
                     # when explore server gives up, can't explore
                     return 'stuck'
@@ -904,20 +911,20 @@ def main():
                                  'succeeded': 'NOTIFY_GRIP',  # start delivery
                                  'preempted': 'GRIP',
                                  'aborted': 'RELEASE'  # release before continuing nav
-                             }
+                             })
             StateMachine.add('NOTIFY_GRIP', NotifyGUI('/we_got_the_can', Bool(True)),
                              transitions={
                                  'succeeded': 'succeeded'
                              })
-                             )
+                             
             StateMachine.add('RELEASE', Grip(False),
                              # TODO: try backing up before attempting to re-grip
                              transitions={
                                  'succeeded': 'DELAY',
                                  'preempted': 'RELEASE',
                                  'aborted': 'aborted'
-                             }
-                             )
+                             })
+                             
 
             #StateMachine.add('EXPLORE2', Explore_v2('discovery'),
             #                 # TODO: try backing up before attempting to re-grip

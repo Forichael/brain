@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  nav_core
 )
 
 ## System dependencies are found with CMake's conventions
@@ -121,6 +122,14 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
+
+#add_library(alpha_recovery
+#	src/alpha_recovery.cpp
+#	)
+#
+#target_link_libraries(alpha_recovery
+#	${catkin_LIBRARIES}
+#	)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

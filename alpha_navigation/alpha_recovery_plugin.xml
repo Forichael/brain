@@ -1,0 +1,7 @@
+<library path="lib/libalpha_recovery">
+  <class name="alpha_recovery/AlphaRecovery" type="alpha_recovery::AlphaRecovery" base_class_type="nav_core::RecoveryBehavior">
+    <description>
+		Get Unstuck Somehow
+    </description>
+  </class>
+</library>
