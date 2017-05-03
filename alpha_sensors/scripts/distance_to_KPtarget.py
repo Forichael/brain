@@ -24,7 +24,7 @@ def find_marker(image):
     imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     imageHSV = cv2.GaussianBlur(imageHSV, (9, 9), 0)
     #declare bounds for target pixel range
-    lower_HSV = np.array([50, 50, 0]) #([70, 100, 10])  ###Outdoor/indoor 7up can
+    lower_HSV = np.array([50, 100, 0]) #([70, 100, 10])  ###Outdoor/indoor 7up can
     higher_HSV = np.array([80, 255, 255]) #([100, 255, 255])
     #show color pixels in range
     colorPixels = cv2.inRange(imageHSV, lower_HSV, higher_HSV)
@@ -61,13 +61,33 @@ def find_KPmatches(img1, des1, kp1, img2, des2, kp2):
             # dist = []
             # ratio test as per Lowe's paper
             for i,(m,n) in enumerate(matches):
-                if m.distance < 0.7*n.distance:
+                if m.distance < 0.9*n.distance:
                     good.append(m)
                     # dist.append(n)
-            return good, len(good)
+            if len(good) >= minReqMatches:
+                #works when obj and scn are reversed...?
+                src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
+                dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
+                #args: object(train), scene(ROI), matchType, errorAllowance
+                M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,2)
+                matchesMask = mask.ravel().tolist()
+                h,w = img1.shape[:2] #x, y, depth (if color)
+                pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
                 
-        except:
-            return [], 0
+                # img_transformed = cv2.warpPerspective(img1, M, dsize=img2.shape[:2])
+                # cv2.imshow('transformed', img_transformed)
+
+                #dst = cv2.perspectiveTransform(pts,M)
+                #img2 = cv2.polylines(img2,[np.int32(dst)],True,255,3, cv2.CV_AA)
+
+                print "%d/%d/%d" % ((len(matches),len(good),minReqMatches))
+                return good, len(good), matchesMask, M
+
+            else:
+                print "Not enough matches are found - %d/%d" % (len(good),minReqMatches)
+                return good, len(good), None, None
+        except Exception as e:
+            return [], 0, None, None
 
 def calibrate_camera(knownDistance, knownHeight, knownImage): #maybe dont have this in
     marker,_ = find_marker(cv2.imread(knownImage))
@@ -94,7 +114,7 @@ FLANN_INDEX_KDTREE = 0;
 index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
 search_params = dict(checks=50) #or pass empty dictionary
 flann = cv2.FlannBasedMatcher(index_params,search_params)
-minReqMatches = 4 #Minimum amount of KP matches to ID can
+minReqMatches = 50 #Minimum amount of KP matches to ID can
 #Initialize training image info
 # operating software, open control line, enter string, read 
 # and return results, remove leading or trailing whitespace
@@ -145,18 +165,19 @@ def img_cb(data):
         #cv2.drawContours(frame, [box], -1, (0, 255, 0), 2)
         print minRect
         x,y,w,h  = minRect
-        cv2.circle(frame, (int(x), int(y+h/2)), 10, (255, 0, 0), 3)
+        # cv2.circle(frame, (int(x), int(y+h/2)), 10, (255, 0, 0), 3)
 
         ptCenBot = [x, y+h/2]
 
         #check for keypoints inside the box (region of interest)
-        ROI = frame[np.floor(x-w/2):np.floor(x+w/2),np.floor(y-h/2):np.floor(y+h/2)]
+        ROI = np.zeros(frame.shape,np.uint8)
+        ROI[y:y+h,x:x+w] = frame[y:y+h,x:x+w]        
         kp_ROI, des_ROI = orb.detectAndCompute(ROI,None)
         bestMatches = []
         bestNumMatches = 0
         bestTrainImg = 0
         for t in range(1, num_train+1):
-            matches, numMatches = find_KPmatches(ROI, des_ROI, kp_ROI, \
+            matches, numMatches, Hthing, Matrix = find_KPmatches(ROI, des_ROI, kp_ROI, \
                                         img_train[t], des_train[t], kp_train[t])
             #only hold onto the best match, if any
             if numMatches > bestNumMatches:
@@ -164,12 +185,9 @@ def img_cb(data):
                 bestMatches = matches #list of matched points
                 bestTrainImg = t #index of the best matched training image
 
-        # Could publish number of matches associated with the best contour,
-        #   if less than threshhold notes location and keeps looking
-        # For human viewing need matches, ROI, img_train[bestTrainingImg]
-        #   and the respective keypoints. If not ROI then minRect.
+        
 
-        if bestNumMatches > minReqMatches:
+        if (bestNumMatches >= minReqMatches and Matrix != None):
 
 
             #Publish the bottom centerpoint to ROS
@@ -247,4 +265,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
