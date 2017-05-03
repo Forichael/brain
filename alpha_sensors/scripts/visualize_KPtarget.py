@@ -212,17 +212,17 @@ for i in range(1,num_train+1):
         kp_train.append(kp)
         des_train.append(des)
 
-#initialize the images aka the camera stream
-cap = cv2.VideoCapture(1)
-cv2.namedWindow('camera view')
+#Computer: initialize the images aka the camera stream
+# cap = cv2.VideoCapture(1)
+# cv2.namedWindow('camera view')
 
-def img_cb(): # arg data if ROS, empty if computer camera
-    #ROS
-    # bridge = CvBridge()
-    # frame = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
+def img_cb(data): 
+    #ROS (2 lines)
+    bridge = CvBridge()
+    frame = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
 
-    #Comp Camera
-    _,frame = cap.read()
+    #Comp Camera (1 line)
+    # _,frame = cap.read()
 
     cv2.imshow('frame', frame)
     # bridge = CvBridge()
@@ -248,8 +248,6 @@ def img_cb(): # arg data if ROS, empty if computer camera
         ptCenBot = [x, y+h/2]
 
         #check for keypoints inside the box (region of interest)
-        
-        # ROI = frame[np.floor(x-w/2):np.floor(x+w/2),np.floor(y-h/2):np.floor(y+h/2)]
         ROI = np.zeros(frame.shape,np.uint8)
         ROI[y:y+h,x:x+w] = frame[y:y+h,x:x+w]
 
@@ -266,41 +264,48 @@ def img_cb(): # arg data if ROS, empty if computer camera
                 bestNumMatches = numMatches #number of KP matches made
                 bestMatches = matches #list of matched points
                 bestTrainImg = t #index of the best matched training image
+        
         if (bestNumMatches >= minReqMatches and Matrix != None):
             # print bestNumMatches
             # print Matrix
             img_transformed = cv2.warpPerspective(ROI, Matrix, dsize=img_train[bestTrainImg].shape[:2])
-
             visMatches = drawMatches(ROI, kp_ROI, img_train[bestTrainImg], \
                             kp_train[bestTrainImg], bestMatches)
             return visMatches, img_transformed
+
         else:
             visMatches = drawMatches(ROI, kp_ROI, img_train[bestTrainImg], \
                             kp_train[bestTrainImg], [])
             return  visMatches, np.zeros(frame.shape,np.uint8) 
+
     else:
         return drawMatches(np.zeros(frame.shape,np.uint8), [], img_train[0], \
                             [], []), np.zeros(frame.shape,np.uint8)
 
 def main():
-    #Note main() and img_cb() need to change for ROS/Computer vision
+    #Note main() img_cb() and end of initialization (computer camera)
+    #need to change for ROS/Computer vision
+    
+    #Computer: change to img_cb()
+    # while(1):
+    #     thingM, thingH= img_cb()
+    #     cv2.imshow('camera view', thingM) 
+    #     cv2.imshow('transformed', thingH)
 
-    #ROS (comment 2 lines if computer vision)
-    # rospy.init_node('can_finder')
-    # img_sub = rospy.Subscriber('/alpha/image_raw', Image, img_cb)
+    #     k = cv2.waitKey(5) & 0xFF
+    #     if k == 27:
+    #         break
+    
+    #ROS: change to img_cb(data)
+    rospy.init_node('can_finder')
+    img_sub = rospy.Subscriber('/alpha/image_raw', Image, img_cb)
 
-
-    while(1):
-        thingM, thingH= img_cb()
-        cv2.imshow('camera view', thingM) 
-        cv2.imshow('transformed', thingH)
-
-        k = cv2.waitKey(5) & 0xFF
-        if k == 27:
-            break
-
-    #ROS (comment 1 line if computer vision)
-    # rospy.spin()
+    thingM, thingH= img_cb()
+    cv2.imshow('frame', Image)
+    cv2.imshow('camera view', thingM) 
+    cv2.imshow('transformed', thingH)
+    
+    rospy.spin()
 
     # global tgt_pub
     # #initialize ROS channels
