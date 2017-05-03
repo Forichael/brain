@@ -188,7 +188,7 @@ FLANN_INDEX_KDTREE = 0;
 index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
 search_params = dict(checks=50) #or pass empty dictionary
 flann = cv2.FlannBasedMatcher(index_params,search_params)
-minReqMatches = 10 #Minimum amount of KP matches to ID can (min=4 RANSAC)
+minReqMatches = 50 #Minimum amount of KP matches to ID can (min=4 RANSAC)
 #Initialize training image info
 # operating software, open control line, enter string, read 
 # and return results, remove leading or trailing whitespace
