@@ -354,10 +354,10 @@ class Explore(State):
         rospy.loginfo('boundary : {}'.format(r))
         x, y, _ = userdata.initial_point
 
-        #boundary.polygon.points.append(Point(x + r, y + r, 0))
-        #boundary.polygon.points.append(Point(x - r, y + r, 0))
-        #boundary.polygon.points.append(Point(x - r, y - r, 0))
-        #boundary.polygon.points.append(Point(x + r, y - r, 0))
+        boundary.polygon.points.append(Point(x + r, y + r, 0))
+        boundary.polygon.points.append(Point(x - r, y + r, 0))
+        boundary.polygon.points.append(Point(x - r, y - r, 0))
+        boundary.polygon.points.append(Point(x + r, y - r, 0))
 
         center = PointStamped()
         center.header.frame_id = "map"
