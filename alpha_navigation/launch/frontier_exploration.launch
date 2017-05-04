@@ -49,7 +49,7 @@
                 laser: {data_type: LaserScan, clearing: true, marking: true, topic: /camera_scan, inf_is_valid: true, raytrace_range: $(arg sensor_range), obstacle_range: $(arg sensor_range)}
 
             inflation:
-                inflation_radius: 0.6
+                inflation_radius: 0.9
       </rosparam>
     </node>
 

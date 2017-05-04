@@ -117,13 +117,15 @@ def isColor(image):
 	# 	colorContour = max(cnts, key = cv2.contourArea) 	
 	# except:
 	# 	#make a filterable exception
-	# 	return [0,0]
+	# 	return 0,0
 
 	# if (cv2.contourArea(colorContour) > 200):
 	# 		#( center (x,y), (width, height), angle of rotation )
 	# 		return [cv2.minAreaRect(colorContour), colorPixels]
 	# else:
 	# 	return [0,0]
+
+	#for multiple contour images
 	cntsBig = []
 	for cnt in cnts:
 		if cv2.contourArea(cnt)>300:
@@ -131,7 +133,7 @@ def isColor(image):
 	if len(cntsBig)>0:
 		return True, cnts
 	else:
-		return False, [0,0]
+		return False, 0,0
 
 def isROI(contours, frame):
 	cnts_ROI=[]
@@ -197,6 +199,8 @@ for i in range(1,num_train+1):
 		img_train.append(img)
 		kp_train.append(kp)
 		des_train.append(des)
+
+		
 	counter = 0
 while(True):
 	counter = counter+1

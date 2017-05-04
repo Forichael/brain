@@ -5,19 +5,21 @@ import numpy as np
 import cv2
 import os
 
-#import ROS stuff
-# import rospy
-# import roslib
-# from sensor_msgs.msg import Image
-# from cv_bridge import CvBridge
+# import ROS stuff
+import rospy
+import roslib
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
 
 def find_marker(image):
     #convert image into HSV, blur it
     imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     imageHSV = cv2.GaussianBlur(imageHSV, (9, 9), 0)
     #declare bounds for target pixel range
-    lower_HSV = np.array([0, 0, 0])#([50, 120, 10])#([65, 40, 40]) #([70, 100, 10])  ###Outdoor/indoor 7up can
-    higher_HSV = np.array([255, 255, 255]) #([100, 255, 255])
+    lower_HSV = np.array([50, 100, 10])#([50, 120, 10])([65, 40, 40])   
+    higher_HSV = np.array([80, 255, 255])#([100, 255, 255])
+    # lower_HSV = np.array([0, 0, 0]) #HSV filter OFF if uncommented
+    # higher_HSV = np.array([255, 255, 255])
     #show color pixels in range
     colorPixels = cv2.inRange(imageHSV, lower_HSV, higher_HSV)
 
@@ -27,9 +29,7 @@ def find_marker(image):
         colorContour = max(cnts, key = cv2.contourArea)     
         if (cv2.contourArea(colorContour) > 100):
             # print "Can color found"
-            # print(cv2.boundingRect(colorContour))
             return cv2.boundingRect(colorContour), colorPixels
-            #return cv2.minAreaRect(colorContour), colorPixels
         else:
             # print "No can color found (too small)"
             return 0,0
@@ -39,40 +39,51 @@ def find_marker(image):
         return 0,0
 
 def find_KPmatches(img1, des1, kp1, img2, des2, kp2):
-        #Make sure that the descriptors are correct format for knnMatch
-        #checks the type of array, and recasts array as type float32 if not already
+        #1 is ROI (scene), 2 is training image(object)
         try:
+            #Make sure that the descriptors are correct format for knnMatch
+            #checks the type of array, and recasts array as type float32 if not already
             if(des1.dtype != np.float32):
                 des1 = des1.astype(np.float32)
             if(des2.dtype != np.float32):
                 des2 = des2.astype(np.float32)
-
+            #match each point to the k closest
             matches = flann.knnMatch(des1, des2, k=2)
-
+            # print matches
             #Filter for good matches
             good = []
             # dist = []
             # ratio test as per Lowe's paper
             for i,(m,n) in enumerate(matches):
-                if m.distance < 0.7*n.distance:
+                if m.distance < .9*n.distance:
                     good.append(m)
                     # dist.append(n)
+            
+            # print "%d/%d" % (len(matches),len(good))
+            # print 'matches found:', len(matches)
 
-            # if len(good) >= minReqMatches:
-            #     src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
-            #     dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
-            #     M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,3)
-            #     matchesMask = mask.ravel().tolist()
-            #     h,w = img1.shape
-            #     pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
-            #     dst = cv2.perspectiveTransform(pts,M)
-
-            #     img2 = cv2.polylines(img2,[np.int32(dst)],True,255,3, cv2.LINE_AA)
-            #     print "%d/%d" % (len(good),minReqMatches)
+            if len(good) >= minReqMatches:
+                #works when obj and scn are reversed...?
+                src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
+                dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
+                #args: object(train), scene(ROI), matchType, errorAllowance
+                M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,2)
+                matchesMask = mask.ravel().tolist()
+                h,w = img1.shape[:2] #x, y, depth (if color)
+                pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
                 
+                # img_transformed = cv2.warpPerspective(img1, M, dsize=img2.shape[:2])
+                # cv2.imshow('transformed', img_transformed)
+
+                #dst = cv2.perspectiveTransform(pts,M)
+                #img2 = cv2.polylines(img2,[np.int32(dst)],True,255,3, cv2.CV_AA)
+
+                print "%d/%d/%d" % ((len(matches),len(good),minReqMatches))
+                return good, len(good), matchesMask, M
+
             else:
-                # print "Not enough matches are found - %d/%d" % (len(good),minReqMatches)
-                matchesMask = None
+                print "Not enough matches are found - %d/%d" % (len(good),minReqMatches)
+                return good, len(good), None, None
 
             # Hcounter=0
             # # print('trying Homography')
@@ -86,20 +97,12 @@ def find_KPmatches(img1, des1, kp1, img2, des2, kp2):
             # print(Hcounter)
 
             # matchesMask = None
-            # return good, len(good), matchesMask
+            # return good, len(good), matchesMask, M
                 
-        except:
-            return [], 0, None
-
-# def find_Homography(obj, scene):
-#     Hcounter=0
-#     H = cv2.findHomography(obj, scene, CV_RANSAC, 3, mask)
-#     for i in range(0,len(good)):
-#         #look for inliers val=1; note outliers val=0
-#         if (mask[i,0]==1):
-#             Hcounter=Hcounter+1
-
-
+        except Exception as e:
+            # print 'sadcat', e
+            # raise
+            return [], 0, None, None
 
 ### drawMatches() not defined until opencv3.0.0
 def drawMatches(img1, kp1, img2, kp2, matches):
@@ -185,7 +188,7 @@ FLANN_INDEX_KDTREE = 0;
 index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
 search_params = dict(checks=50) #or pass empty dictionary
 flann = cv2.FlannBasedMatcher(index_params,search_params)
-minReqMatches = 4 #Minimum amount of KP matches to ID can
+minReqMatches = 50 #Minimum amount of KP matches to ID can (min=4 RANSAC)
 #Initialize training image info
 # operating software, open control line, enter string, read 
 # and return results, remove leading or trailing whitespace
@@ -209,17 +212,17 @@ for i in range(1,num_train+1):
         kp_train.append(kp)
         des_train.append(des)
 
-#initialize the images aka the camera stream
-cap = cv2.VideoCapture(0)
-cv2.namedWindow('camera view')
+#Computer: initialize the images aka the camera stream
+# cap = cv2.VideoCapture(1)
+# cv2.namedWindow('camera view')
 
-def img_cb(): # arg data if ROS, empty if computer camera
-    #ROS
-    # bridge = CvBridge()
-    # frame = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
+def img_cb(data): 
+    #ROS (2 lines)
+    bridge = CvBridge()
+    frame = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
 
-    #Comp Camera
-    _,frame = cap.read()
+    #Comp Camera (1 line)
+    # _,frame = cap.read()
 
     cv2.imshow('frame', frame)
     # bridge = CvBridge()
@@ -240,13 +243,11 @@ def img_cb(): # arg data if ROS, empty if computer camera
         #cv2.drawContours(frame, [box], -1, (0, 255, 0), 2)
         # print minRect
         x,y,w,h  = minRect
-        cv2.circle(frame, (int(x), int(y+h/2)), 10, (255, 0, 0), 3)
+        # cv2.circle(frame, (int(x), int(y+h/2)), 10, (255, 0, 0), 3)
 
         ptCenBot = [x, y+h/2]
 
         #check for keypoints inside the box (region of interest)
-        
-        # ROI = frame[np.floor(x-w/2):np.floor(x+w/2),np.floor(y-h/2):np.floor(y+h/2)]
         ROI = np.zeros(frame.shape,np.uint8)
         ROI[y:y+h,x:x+w] = frame[y:y+h,x:x+w]
 
@@ -255,53 +256,56 @@ def img_cb(): # arg data if ROS, empty if computer camera
         bestNumMatches = 0
         bestTrainImg = 0
         for t in range(1, num_train):
-            matches, numMatches, Hthing = find_KPmatches(ROI, des_ROI, kp_ROI, \
+
+            matches, numMatches, Hthing, Matrix = find_KPmatches(ROI, des_ROI, kp_ROI, \
                                                     img_train[t], des_train[t], kp_train[t])
             #only hold onto the best match, if any
             if numMatches > bestNumMatches:
                 bestNumMatches = numMatches #number of KP matches made
                 bestMatches = matches #list of matched points
                 bestTrainImg = t #index of the best matched training image
-
-        # Could publish number of matches associated with the best contour,
-        #   if less than threshhold notes location and keeps looking
-        # For human viewing need matches, ROI, img_train[bestTrainingImg]
-        #   and the respective keypoints. If not ROI then minRect.
-
-        if bestNumMatches >= minReqMatches:
-            print(bestNumMatches)
+        
+        if (bestNumMatches >= minReqMatches and Matrix != None):
+            # print bestNumMatches
+            # print Matrix
+            img_transformed = cv2.warpPerspective(ROI, Matrix, dsize=img_train[bestTrainImg].shape[:2])
             visMatches = drawMatches(ROI, kp_ROI, img_train[bestTrainImg], \
                             kp_train[bestTrainImg], bestMatches)
+            return visMatches, img_transformed
 
         else:
             visMatches = drawMatches(ROI, kp_ROI, img_train[bestTrainImg], \
                             kp_train[bestTrainImg], [])
-        return  visMatches
-        
+            return  visMatches, np.zeros(frame.shape,np.uint8) 
+
     else:
         return drawMatches(np.zeros(frame.shape,np.uint8), [], img_train[0], \
-                            [], [])
-
-
+                            [], []), np.zeros(frame.shape,np.uint8)
 
 def main():
-    #Note main() and img_cb() need to change for ROS/Computer vision
+    #Note main() img_cb() and end of initialization (computer camera)
+    #need to change for ROS/Computer vision
+    
+    #Computer: change to img_cb()
+    # while(1):
+    #     thingM, thingH= img_cb()
+    #     cv2.imshow('camera view', thingM) 
+    #     cv2.imshow('transformed', thingH)
 
-    #ROS (comment 2 lines if computer vision)
-    # rospy.init_node('can_finder')
-    # img_sub = rospy.Subscriber('/alpha/image_raw', Image, img_cb)
+    #     k = cv2.waitKey(5) & 0xFF
+    #     if k == 27:
+    #         break
+    
+    #ROS: change to img_cb(data)
+    rospy.init_node('can_finder')
+    img_sub = rospy.Subscriber('/alpha/image_raw', Image, img_cb)
 
-
-    while(1):
-        thing= img_cb()
-        cv2.imshow('camera view', thing) 
-
-        k = cv2.waitKey(5) & 0xFF
-        if k == 27:
-            break
-
-    #ROS (comment 1 line if computer vision)
-    # rospy.spin()
+    thingM, thingH= img_cb()
+    cv2.imshow('frame', Image)
+    cv2.imshow('camera view', thingM) 
+    cv2.imshow('transformed', thingH)
+    
+    rospy.spin()
 
     # global tgt_pub
     # #initialize ROS channels
