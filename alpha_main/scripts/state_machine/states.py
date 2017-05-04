@@ -948,7 +948,7 @@ def main():
                              )
             StateMachine.add('NAV', Navigate('discovery'),
                              transitions={
-                                 'succeeded': 'RELEASE',  # release gripper before pnav
+                                 'succeeded': 'DELAY',  # release gripper before pnav
                                  'lost': 'EXPLORE',
                                  'aborted': 'EXPLORE'
                              }
@@ -961,35 +961,42 @@ def main():
                              )
             StateMachine.add('DELAY', Delay(3),
                              transitions={
-                                 'succeeded': 'PNAV'
+                                 'succeeded': 'PNAV_NEW'
                              }
                              )
-            StateMachine.add('PNAV', ProximityNav(objective='discovery'),
+
+            StateMachine.add('PNAV_NEW', sm_dogrip,
                              transitions={
-                                 'succeeded': 'GRIP',
-                                 'lost': 'EXPLORE'
-                             }
-                             )
-            StateMachine.add('GRIP', Grip(True),
-                             transitions={
-                                 # Change to "succeeded" when not testing just PNAV
-                                 'succeeded': 'NOTIFY_GRIP',  # start delivery
-                                 'preempted': 'GRIP',
-                                 'aborted': 'RELEASE'  # release before continuing nav
+                                 'succeeded': 'succeeded',
+                                 'aborted': 'EXPLORE'
                              })
-            StateMachine.add('NOTIFY_GRIP', NotifyGUI('/we_got_the_can', Bool(True)),
-                             transitions={
-                                 'succeeded': 'succeeded'
-                             })
-                             
-            StateMachine.add('RELEASE', Grip(False),
-                             # TODO: try backing up before attempting to re-grip
-                             transitions={
-                                 'succeeded': 'DELAY',
-                                 'preempted': 'RELEASE',
-                                 'aborted': 'aborted'
-                             })
-                             
+
+            # StateMachine.add('PNAV', ProximityNav(objective='discovery'),
+            #                  transitions={
+            #                      'succeeded': 'GRIP',
+            #                      'lost': 'EXPLORE'
+            #                  }
+            #                  )
+            # StateMachine.add('GRIP', Grip(True),
+            #                  transitions={
+            #                      # Change to "succeeded" when not testing just PNAV
+            #                      'succeeded': 'NOTIFY_GRIP',  # start delivery
+            #                      'preempted': 'GRIP',
+            #                      'aborted': 'RELEASE'  # release before continuing nav
+            #                  })
+            # StateMachine.add('NOTIFY_GRIP', NotifyGUI('/we_got_the_can', Bool(True)),
+            #                  transitions={
+            #                      'succeeded': 'succeeded'
+            #                  })
+            #
+            # StateMachine.add('RELEASE', Grip(False),
+            #                  # TODO: try backing up before attempting to re-grip
+            #                  transitions={
+            #                      'succeeded': 'DELAY',
+            #                      'preempted': 'RELEASE',
+            #                      'aborted': 'aborted'
+            #                  })
+            #
 
             #StateMachine.add('EXPLORE2', Explore_v2('discovery'),
             #                 # TODO: try backing up before attempting to re-grip
@@ -1077,6 +1084,8 @@ def main():
         outcome = sm.execute(data)
     elif command == 'prox':
         outcome = sm_dogrip.execute(data)
+    elif command == 'discover':
+        outcome = sm_dis.execute(data)
     else:
         rospy.logerr("Invalid command given")
 
