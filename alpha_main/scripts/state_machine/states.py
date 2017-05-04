@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import math
+import sys
 import rospy
 import numpy as np
 from geometry_msgs.msg import PoseStamped, PolygonStamped, PointStamped, Pose, Quaternion, Point, Twist, Vector3
@@ -867,6 +868,49 @@ def main():
     # Open the container
     with sm:
 
+        sm_dogrip = StateMachine(
+            outcomes=['succeeded', 'aborted']
+        )
+        with sm_dogrip:
+            StateMachine.add('HOMING', ProximityNav(objective='discovery'),
+                             transitions={
+                                 'succeeded': 'GRIP',
+                                 'lost': 'aborted'
+                             }
+                             )
+
+            StateMachine.add('GRIP', Grip(True),
+                             transitions={
+                                 # Change to "succeeded" when not testing just PNAV
+                                 'succeeded': 'NOTIFY_GRIP',  # start delivery
+                                 'preempted': 'GRIP',
+                                 'aborted': 'RELEASE'  # release before continuing nav
+                             })
+
+            StateMachine.add('NOTIFY_GRIP', NotifyGUI('/we_got_the_can', Bool(True)),
+                             transitions={
+                                 'succeeded': 'DELAY'
+                             })
+
+            StateMachine.add('DELAY', Delay(2),
+                             transitions={
+                                 'succeeded': 'BACKUP'
+                             }
+                             )
+
+            StateMachine.add('BACKUP', Backup(time=2, speed=0.5),
+                             transitions={
+                                 'succeeded':'succeeded'
+                             })
+
+            StateMachine.add('RELEASE', Grip(False),
+                             # TODO: try backing up before attempting to re-grip
+                             transitions={
+                                 'succeeded': 'aborted',
+                                 'preempted': 'RELEASE',
+                                 'aborted': 'aborted'
+                             })
+
         # Add states to the container
         sm_dis = StateMachine(
             outcomes=['succeeded', 'aborted'],
@@ -1001,7 +1045,19 @@ def main():
 
     sis = IntrospectionServer('smach', sm, '/SM_ROOT')
     sis.start()
-    outcome = sm.execute(data)
+
+    if len(sys.argv) >= 2:
+        command = sys.argv[1]
+    else:
+        command = 'full'
+
+
+    if command == 'full':
+        outcome = sm.execute(data)
+    elif command == 'prox':
+        outcome = sm_dogrip.execute(data)
+    else:
+        rospy.logerr("Invalid command given")
 
     print 'done_1'
     rospy.spin()
