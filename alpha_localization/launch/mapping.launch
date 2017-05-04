@@ -6,16 +6,16 @@
 		<param name="base_frame" value="base_link"/>
 		<param name="odom_frame" value="odom"/>
 
-		<param name="map_update_interval" value="0.1"/>
+		<param name="map_update_interval" value="2"/>
 
 		<param name="linearUpdate" value="0.2"/>
-		<!--<param name="angularUpdate" value="0.5"/>-->
-		<param name="temporalUpdate" value="0.5"/>
+		<param name="angularUpdate" value="0.5"/>
+		<!--<param name="temporalUpdate" value="0.5"/>-->
 
 		<param name="delta" value="0.05"/>
 
 		<!--<param name="particles" value="30"/>-->
-		<param name="maxUrange" value="5.5"/>
+		<param name="maxUrange" value="3"/>
 		<param name="maxRange" value="5.6"/>
 
 	</node>
