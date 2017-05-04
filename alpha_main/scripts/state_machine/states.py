@@ -874,16 +874,37 @@ def main():
         with sm_dogrip:
             StateMachine.add('HOMING', ProximityNav(objective='discovery'),
                              transitions={
-                                 'succeeded': 'GRIP',
+                                 'succeeded': 'GRIP1',
                                  'lost': 'aborted'
                              }
                              )
 
-            StateMachine.add('GRIP', Grip(True),
+            StateMachine.add('GRIP1', Grip(True),
                              transitions={
                                  # Change to "succeeded" when not testing just PNAV
                                  'succeeded': 'NOTIFY_GRIP',  # start delivery
-                                 'preempted': 'GRIP',
+                                 'preempted': 'aborted',
+                                 'aborted': 'TAPOFF1'  # Try again
+                             })
+
+            # Release the can
+            StateMachine.add('TAPOFF1', Grip(False),
+                             transitions={
+                                 'succeeded': 'TAPOFF2',
+                                 'preempted': 'aborted',
+                                 'aborted': 'aborted'
+                             })
+
+            # Drive forward a fraction of a second
+            StateMachine.add('TAPOFF2', Backup(time=0.5, speed=0.1),
+                             transitions={
+                                 'succeeded': 'GRIP2'
+                             })
+
+            StateMachine.add('GRIP2', Grip(True),
+                             transitions={
+                                 'succeeded': 'NOTIFY_GRIP',  # start delivery
+                                 'preempted': 'aborted',
                                  'aborted': 'RELEASE'  # release before continuing nav
                              })
 
@@ -898,7 +919,7 @@ def main():
                              }
                              )
 
-            StateMachine.add('BACKUP', Backup(time=2, speed=0.5),
+            StateMachine.add('BACKUP', Backup(time=3, speed=-0.2),
                              transitions={
                                  'succeeded':'succeeded'
                              })
