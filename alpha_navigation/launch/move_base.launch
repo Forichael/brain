@@ -1,6 +1,6 @@
 <launch>
 
-	<arg name="map_file" default="$(find alpha_navigation)/maps/AC1.04.yaml"/>
+	<arg name="map_file" default="$(find alpha_navigation)/maps/testing2-tuned.yaml"/>
 
 	<arg name="slam" default="false"/>
 
