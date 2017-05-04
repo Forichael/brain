@@ -9,7 +9,7 @@ frequency: 100
 # WHEEL ENCODER 
 odom0: /odom
 odom0_config: [true,true,true, # position
-               false,false,false, # somehow must disable this
+               false,false,true, # somehow must disable this
                true,false,false, # linear velocity - certainly
                false,false,false, # angular velocity - kind of.
                false,false,false]
@@ -31,7 +31,7 @@ imu1: /imu/data
 imu1_config: [false, false, false, # no position data
               false, false, false, # Orientation
               false, false, false, # no velocity data
-              false, false, true, # Angular Velocity
+              false, false, false, # Angular Velocity
               true, false, false] # Linear Acceleration #TODO : disable y-direction acceleration for diff-drive robot!
 imu1_differential: false # Absolute Orientation (w.r.t magnetic field)
 imu1_queue_size: 10
